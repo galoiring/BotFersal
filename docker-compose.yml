@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  botfersal:
+    build: .
+    container_name: botfersal
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - MONGO_CONNECTION_STRING=${MONGO_CONNECTION_STRING}
+      - TEN_BIS_MAIL=${TEN_BIS_MAIL}
+      - USER_NAME=${USER_NAME}
+      - GMAIL_ADDRESS=${GMAIL_ADDRESS}
+      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+    volumes:
+      - ./logs:/app/logs
+      - ./temp:/app/temp
+    networks:
+      - botfersal_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  botfersal_network:
+    driver: bridge
+
+volumes:
+  logs:
+  temp:

@@ -85,12 +85,20 @@ def handle_query(call):
     if call.data.startswith("coupon"):
         result = mongo.check_how_much_money()
         coupon_sum = mongo.coupons_sum(result)
-        bot.edit_message_text(chat_id=call.message.chat.id,
-                              text="סה''כ כסף בשוברים: " +
-                              str(coupon_sum) + "₪",
-                              message_id=call.message.message_id,
-                              reply_markup=menu.coupon_menu(result),
-                              parse_mode='HTML')
+        try:
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  text="סה''כ כסף בשוברים: " +
+                                  str(coupon_sum) + "₪",
+                                  message_id=call.message.message_id,
+                                  reply_markup=menu.coupon_menu(result),
+                                  parse_mode='HTML')
+        except telebot.apihelper.ApiTelegramException as e:
+            if "message is not modified" in str(e):
+                # Message content is the same, just answer the callback to remove loading state
+                bot.answer_callback_query(callback_query_id=call.id)
+            else:
+                raise e
+
     if call.data.startswith("scan"):
         if call.data == "scan":  # Original 10bis scan
             ten_bis_api(call)
@@ -127,20 +135,42 @@ def handle_query(call):
         delete_message(call, call.message.message_id)
         delete_barcode_message(call)
     if call.data.startswith("Back"):
-        bot.edit_message_text(chat_id=call.message.chat.id,
-                              text="BotFersal",
-                              message_id=call.message.message_id,
-                              reply_markup=menu.menu(),
-                              parse_mode='HTML')
+        try:
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  text="BotFersal",
+                                  message_id=call.message.message_id,
+                                  reply_markup=menu.menu(),
+                                  parse_mode='HTML')
+        except telebot.apihelper.ApiTelegramException as e:
+            if "message is not modified" in str(e):
+                bot.answer_callback_query(callback_query_id=call.id)
+            else:
+                raise e
+
     if call.data.startswith("refresh"):
         result = mongo.check_how_much_money()
         coupon_sum = mongo.coupons_sum(result)
-        bot.edit_message_text(chat_id=call.message.chat.id,
-                              text="סה''כ כסף בשוברים: " +
-                              str(coupon_sum) + "₪",
-                              message_id=call.message.message_id,
-                              reply_markup=menu.coupon_menu(result),
-                              parse_mode='HTML')
+
+        # Get current message text to compare
+        current_text = f"סה''כ כסף בשוברים: {coupon_sum}₪"
+
+        try:
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  text=current_text,
+                                  message_id=call.message.message_id,
+                                  reply_markup=menu.coupon_menu(result),
+                                  parse_mode='HTML')
+        except telebot.apihelper.ApiTelegramException as e:
+            if "message is not modified" in str(e):
+                # If content is the same, just answer the callback query to remove loading state
+                bot.answer_callback_query(
+                    callback_query_id=call.id,
+                    text="השוברים מעודכנים ✅",
+                    show_alert=False
+                )
+            else:
+                raise e
+
     if call.data.startswith("close"):
         bot.delete_message(chat_id=call.message.chat.id,
                            message_id=call.message.message_id)

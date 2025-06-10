@@ -1,20 +1,47 @@
-FROM python:latest
+# Use Python 3.11 slim image for ARM compatibility
+FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERD 1
+# Set maintainer label
+LABEL maintainer="Your Name <your.email@example.com>"
 
-LABEL Maintainer="your name"
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 
-WORKDIR /home/orangepi/BotFersal
+# Set working directory
+WORKDIR /app
 
-COPY *.py requirements.txt  ./
+# Install system dependencies for ARM architecture
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libffi-dev \
+    libssl-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libfreetype6-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /home/orangepi/BotFersal
-RUN apt-get update
-RUN pip3 install --upgrade pip
-RUN pip3 install --upgrade setuptools
-RUN pip3 install -r /home/orangepi/BotFersal/requirements.txt
+# Copy requirements first for better Docker layer caching
+COPY requirements.txt .
 
-ENV PYTHONPATH /home/orangepi/BotFersal
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-CMD [ "python3", "./bot_fersal.py"]
+# Copy all application files
+COPY . .
+
+# Create directory for barcode generation
+RUN mkdir -p /app/temp
+
+# Expose port (optional, for health checks)
+EXPOSE 8000
+
+# Health check (optional)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('https://api.telegram.org/bot${BOT_TOKEN}/getMe', timeout=5)" || exit 1
+
+# Run the bot
+CMD ["python", "bot_fersal.py"]
