@@ -17,6 +17,13 @@ services:
       - ./temp:/app/temp
     networks:
       - botfersal_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25" # Limit to 25% of one CPU core
+          memory: 256M # Limit to 256MB RAM
+        reservations:
+          memory: 128M # Reserve at least 128MB RAM
     logging:
       driver: "json-file"
       options:
