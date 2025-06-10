@@ -7,6 +7,7 @@ import generate_barcode
 from Shovar import Shovar
 import appSettings as appSet
 from ShovarFromMongo import ShovarFromMongo
+from email_processor import CibusEmailProcessor
 
 # bot init
 bot = telebot.TeleBot(appSet.botToken)
@@ -15,6 +16,56 @@ bot = telebot.TeleBot(appSet.botToken)
 message_ids = {}
 barcode_ids = {}
 global_shovar = []
+
+email_processor = None
+
+
+def initialize_email_processor():
+    """Initialize email processor with credentials"""
+    global email_processor
+    try:
+        # You'll need to add these to your appSettings.py
+        email_processor = CibusEmailProcessor(
+            email_address="gal.cibus@gmail.com",
+            password=appSet.gmail_app_password  # Add this to appSettings.py
+        )
+        return True
+    except Exception as e:
+        print(f"Failed to initialize email processor: {e}")
+        return False
+
+
+def scan_cibus_emails_handler(call):
+    """Handle Cibus email scanning"""
+    scanning_msg = bot.send_message(
+        call.message.chat.id, "📧 סורק אימיילים של Cibus...")
+
+    try:
+        added_count, total_amount = mongo.scan_cibus_emails()
+
+        delete_message(call, scanning_msg.message_id)
+
+        if added_count > 0:
+            result_msg = bot.send_message(
+                call.message.chat.id,
+                f"✅ נמצאו {added_count} שוברי Cibus חדשים בסך {total_amount:.0f}₪!"
+            )
+        else:
+            result_msg = bot.send_message(
+                call.message.chat.id,
+                "ℹ️ לא נמצאו שוברי Cibus חדשים"
+            )
+
+        time.sleep(5)
+        delete_message(call, result_msg.message_id)
+
+    except Exception as e:
+        delete_message(call, scanning_msg.message_id)
+        error_msg = bot.send_message(
+            call.message.chat.id, f"❌ שגיאה בסריקת אימיילים: {e}")
+        time.sleep(3)
+        delete_message(call, error_msg.message_id)
+
 
 @bot.message_handler(commands=['תפריט'])
 def handle_command_adminwindow(message):
@@ -35,12 +86,17 @@ def handle_query(call):
         result = mongo.check_how_much_money()
         coupon_sum = mongo.coupons_sum(result)
         bot.edit_message_text(chat_id=call.message.chat.id,
-                              text="סה''כ כסף בשוברים: " + str(coupon_sum) + "₪",
+                              text="סה''כ כסף בשוברים: " +
+                              str(coupon_sum) + "₪",
                               message_id=call.message.message_id,
                               reply_markup=menu.coupon_menu(result),
                               parse_mode='HTML')
     if call.data.startswith("scan"):
-        ten_bis_api(call)
+        if call.data == "scan":  # Original 10bis scan
+            ten_bis_api(call)
+        elif call.data == "scan_cibus":  # New Cibus scan
+            scan_cibus_emails_handler(call)
+
     if call.data.startswith("two_hundred"):
         barcode = mongo.find_barcode("200")
         find_or_not(barcode, call, local_shovar, 200)
@@ -80,22 +136,29 @@ def handle_query(call):
         result = mongo.check_how_much_money()
         coupon_sum = mongo.coupons_sum(result)
         bot.edit_message_text(chat_id=call.message.chat.id,
-                              text="סה''כ כסף בשוברים: " + str(coupon_sum) + "₪",
+                              text="סה''כ כסף בשוברים: " +
+                              str(coupon_sum) + "₪",
                               message_id=call.message.message_id,
                               reply_markup=menu.coupon_menu(result),
                               parse_mode='HTML')
     if call.data.startswith("close"):
-        bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+        bot.delete_message(chat_id=call.message.chat.id,
+                           message_id=call.message.message_id)
+
+    if call.data.startswith("scan_cibus"):
+        scan_cibus_emails_handler(call)
 
 
 def find_or_not(barcode, call, local_shovar, amount):
     if None == barcode:
-        bot.answer_callback_query(callback_query_id=call.id, show_alert=True, text=f"לא קיים שובר על סך {amount}₪")
+        bot.answer_callback_query(
+            callback_query_id=call.id, show_alert=True, text=f"לא קיים שובר על סך {amount}₪")
     else:
         local_shovar.append(convert_mongo_to_shovar(barcode))
         global_shovar.append(local_shovar[0])
         new_file = generate_barcode.generate_barcode(local_shovar[0].code)
-        message_id = bot.send_photo(chat_id=call.message.chat.id, photo=new_file).message_id
+        message_id = bot.send_photo(
+            chat_id=call.message.chat.id, photo=new_file).message_id
         if call.message.chat.id in barcode_ids.keys():
             barcode_ids[call.message.chat.id].append(message_id)
         else:
@@ -128,7 +191,8 @@ def delete_barcode_message(call):
 
 
 def ten_bis_api(call):
-    sent_msg = bot.send_message(call.message.chat.id, "יש להכניס את קוד האימות שקיבלת כעת")
+    sent_msg = bot.send_message(
+        call.message.chat.id, "יש להכניס את קוד האימות שקיבלת כעת")
     (email, headers, resp_json, session) = tenbis_report.auth_tenbis()
     if (email, headers, resp_json, session) == None:
         time.sleep(3)
@@ -140,7 +204,8 @@ def ten_bis_api(call):
     else:
         time.sleep(3)
         delete_message(call, sent_msg.message_id)
-        bot.register_next_step_handler(sent_msg, otp_handler, email, headers, resp_json, session, call)
+        bot.register_next_step_handler(
+            sent_msg, otp_handler, email, headers, resp_json, session, call)
 
 
 def otp_handler(call, email, headers, resp_json, session, original_call):
@@ -151,8 +216,10 @@ def otp_handler(call, email, headers, resp_json, session, original_call):
     string = "מתוך השוברים שסרקתי, השוברים הבאים כבר שמורים אצלי:" + "\n"
     str_len = len(string)
     if otp.isdigit() and len(otp) == 5:
-        scanning_message = bot.send_message(original_call.message.chat.id, "סורק 🧐")
-        session = tenbis_report.auth_otp(email, headers, resp_json, session, otp)
+        scanning_message = bot.send_message(
+            original_call.message.chat.id, "סורק 🧐")
+        session = tenbis_report.auth_otp(
+            email, headers, resp_json, session, otp)
         ten_bis = tenbis_report.main_procedure(session)
         for shovar in ten_bis:
             if mongo.check_if_exist(shovar.code) == None:
@@ -171,13 +238,47 @@ def otp_handler(call, email, headers, resp_json, session, original_call):
             time.sleep(5)
             delete_message(original_call, temp.message_id)
         if count > 0:
-            temp = bot.send_message(original_call.message.chat.id, f"נוספו {count} שוברים חדשים על סך {amount}₪")
+            temp = bot.send_message(
+                original_call.message.chat.id, f"נוספו {count} שוברים חדשים על סך {amount}₪")
             time.sleep(5)
             delete_message(original_call, temp.message_id)
     else:
-        temp = bot.send_message(original_call.message.chat.id, "קוד לא תקין, נא ללחוץ על 'סריקה' שוב")
+        temp = bot.send_message(
+            original_call.message.chat.id, "קוד לא תקין, נא ללחוץ על 'סריקה' שוב")
         time.sleep(5)
         delete_message(original_call, temp.message_id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("scan_email"))
+def handle_email_scan(call):
+    scanning_msg = bot.send_message(
+        call.message.chat.id, "📧 Scanning emails for vouchers...")
+
+    try:
+        added_count, total_amount = scan_cibus_emails()
+
+        bot.delete_message(call.message.chat.id, scanning_msg.message_id)
+
+        if added_count > 0:
+            result_msg = bot.send_message(
+                call.message.chat.id,
+                f"✅ Found {added_count} new vouchers worth ₪{total_amount:.0f}!"
+            )
+        else:
+            result_msg = bot.send_message(
+                call.message.chat.id,
+                "ℹ️ No new vouchers found in email"
+            )
+
+        time.sleep(5)
+        bot.delete_message(call.message.chat.id, result_msg.message_id)
+
+    except Exception as e:
+        bot.delete_message(call.message.chat.id, scanning_msg.message_id)
+        error_msg = bot.send_message(
+            call.message.chat.id, f"❌ Email scan failed: {e}")
+        time.sleep(3)
+        bot.delete_message(call.message.chat.id, error_msg.message_id)
 
 
 bot.infinity_polling()
