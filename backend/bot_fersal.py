@@ -1,6 +1,6 @@
 import time
 import menu
-import mongo
+import backend.mongo as mongo
 import telebot
 import tenbis_report
 import generate_barcode

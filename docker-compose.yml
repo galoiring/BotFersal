@@ -3,37 +3,36 @@ version: "3.8"
 services:
   botfersal:
     build: .
-    container_name: botfersal
-    restart: unless-stopped
+    container_name: botfersal-app
+    ports:
+      - "8000:8000"
     environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-      - MONGO_CONNECTION_STRING=${MONGO_CONNECTION_STRING}
-      - TEN_BIS_MAIL=${TEN_BIS_MAIL}
-      - USER_NAME=${USER_NAME}
-      - GMAIL_ADDRESS=${GMAIL_ADDRESS}
-      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+      - NODE_ENV=production
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./logs:/app/logs
       - ./temp:/app/temp
-    networks:
-      - botfersal_network
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25" # Limit to 25% of one CPU core
-          memory: 256M # Limit to 256MB RAM
-        reservations:
-          memory: 128M # Reserve at least 128MB RAM
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
-networks:
-  botfersal_network:
-    driver: bridge
-
-volumes:
-  logs:
-  temp:
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: botfersal-ngrok
+    restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml:ro
+    ports:
+      - "4040:4040" # Ngrok dashboard
+    depends_on:
+      botfersal:
+        condition: service_healthy

@@ -1,47 +1,45 @@
-# Use Python 3.11 slim image for ARM compatibility
+FROM node:18-alpine AS build
+
+# Build React app
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci --only=production
+COPY frontend/ ./
+RUN npm run build
+
+# Python backend
 FROM python:3.11-slim
 
-# Set maintainer label
-LABEL maintainer="Your Name <your.email@example.com>"
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
+LABEL Maintainer="Your Name"
+WORKDIR /app
 ENV PYTHONPATH=/app
 
-# Set working directory
-WORKDIR /app
-
-# Install system dependencies for ARM architecture
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
+    curl \
     gcc \
     g++ \
-    libffi-dev \
-    libssl-dev \
-    libjpeg-dev \
-    libpng-dev \
-    libfreetype6-dev \
-    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better Docker layer caching
-COPY requirements.txt .
-
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all application files
-COPY . .
+# Copy backend code
+COPY backend/ ./
 
-# Create directory for barcode generation
-RUN mkdir -p /app/temp
+# Copy React build
+COPY --from=build /app/frontend/build ./build
 
-# Expose port (optional, for health checks)
+# Create necessary directories
+RUN mkdir -p logs temp
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
+
+# Expose port
 EXPOSE 8000
 
-# Health check (optional)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('https://api.telegram.org/bot${BOT_TOKEN}/getMe', timeout=5)" || exit 1
-
-# Run the bot
-CMD ["python", "bot_fersal.py"]
+# Run the application
+CMD ["python", "app.py"]

@@ -1,0 +1,16 @@
+version: "2"
+authtoken: YOUR_NGROK_AUTH_TOKEN
+
+tunnels:
+  botfersal:
+    addr: botfersal:8000
+    proto: http
+    schemes: [https, http]
+    inspect: false
+    # Add these to suppress browser warning
+    request_header:
+      add:
+        - "ngrok-skip-browser-warning: true"
+    response_header:
+      add:
+        - "ngrok-skip-browser-warning: true"
