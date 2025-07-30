@@ -24,6 +24,7 @@ services:
     image: ngrok/ngrok:latest
     container_name: botfersal-ngrok
     restart: unless-stopped
+    network_mode: host
     command:
       - "start"
       - "--all"
@@ -31,8 +32,6 @@ services:
       - "/etc/ngrok.yml"
     volumes:
       - ./ngrok.yml:/etc/ngrok.yml:ro
-    ports:
-      - "4040:4040" # Ngrok dashboard
     depends_on:
       botfersal:
         condition: service_healthy

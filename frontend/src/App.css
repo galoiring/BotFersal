@@ -41,23 +41,31 @@ body {
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Custom animations */
+/* Enhanced Custom animations */
 @keyframes float {
   0%,
   100% {
-    transform: translateY(0px);
+    transform: translateY(0px) rotate(0deg);
   }
-  50% {
-    transform: translateY(-10px);
+  33% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(-4px) rotate(-1deg);
   }
 }
 
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
   }
   100% {
     background-position: 200% 0;
+    opacity: 0;
   }
 }
 
@@ -65,36 +73,105 @@ body {
   0%,
   100% {
     box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6), 0 0 60px rgba(139, 92, 246, 0.3);
+    transform: scale(1.02);
   }
 }
 
 @keyframes scale-up {
   from {
     opacity: 0;
-    transform: scale(0.8) translateY(20px);
+    transform: scale(0.8) translateY(30px);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
+    filter: blur(0px);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-180deg);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes success-pop {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  80% {
+    transform: scale(1.2) rotate(360deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
+@keyframes wiggle {
+  0%, 7% {
+    transform: rotateZ(0);
+  }
+  15% {
+    transform: rotateZ(-15deg);
+  }
+  20% {
+    transform: rotateZ(10deg);
+  }
+  25% {
+    transform: rotateZ(-10deg);
+  }
+  30% {
+    transform: rotateZ(6deg);
+  }
+  35% {
+    transform: rotateZ(-4deg);
+  }
+  40%, 100% {
+    transform: rotateZ(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .animate-float {
-  animation: float 3s ease-in-out infinite;
+  animation: float 4s ease-in-out infinite;
 }
 
 .animate-shimmer {
   background-image: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.6),
     transparent
   );
   background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+  animation: shimmer 3s infinite;
 }
 
 .animate-pulse-glow {
@@ -102,7 +179,23 @@ body {
 }
 
 .animate-scale-up {
-  animation: scale-up 0.3s ease-out;
+  animation: scale-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-success-pop {
+  animation: success-pop 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-wiggle {
+  animation: wiggle 0.8s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* Voucher card enhancements */
@@ -165,18 +258,30 @@ body {
 
 /* Enhanced shadows */
 .shadow-3xl {
-  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 
 .shadow-inner-light {
   box-shadow: inset 0 2px 4px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* Gradient backgrounds */
+.shadow-glow {
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.3), 0 0 60px rgba(139, 92, 246, 0.2);
+}
+
+.shadow-success {
+  box-shadow: 0 20px 40px -12px rgba(34, 197, 94, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+}
+
+.shadow-error {
+  box-shadow: 0 20px 40px -12px rgba(239, 68, 68, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+}
+
+/* Enhanced Gradient backgrounds */
 .bg-gradient-glass {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.15),
     rgba(255, 255, 255, 0.05)
   );
 }
@@ -184,7 +289,7 @@ body {
 .bg-gradient-blue-glass {
   background: linear-gradient(
     135deg,
-    rgba(99, 102, 241, 0.8),
+    rgba(99, 102, 241, 0.9),
     rgba(139, 92, 246, 0.8)
   );
 }
@@ -192,8 +297,35 @@ body {
 .bg-gradient-purple-glass {
   background: linear-gradient(
     135deg,
-    rgba(139, 92, 246, 0.8),
+    rgba(139, 92, 246, 0.9),
     rgba(219, 39, 119, 0.8)
+  );
+}
+
+.bg-gradient-success {
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.9),
+    rgba(16, 185, 129, 0.8)
+  );
+}
+
+.bg-gradient-orange {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 124, 0, 0.9),
+    rgba(255, 69, 0, 0.8)
+  );
+}
+
+.bg-gradient-rainbow {
+  background: linear-gradient(
+    135deg,
+    #667eea 0%,
+    #764ba2 25%,
+    #f093fb 50%,
+    #f5576c 75%,
+    #4facfe 100%
   );
 }
 
@@ -208,60 +340,156 @@ body {
   color: inherit;
 }
 
-/* Scrollbar styling */
+/* Enhanced Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border-radius: 12px;
+  margin: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.6), rgba(139, 92, 246, 0.6));
+  border-radius: 12px;
   border: 2px solid transparent;
   background-clip: content-box;
+  transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8));
+  background-clip: content-box;
+  transform: scale(1.1);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, rgba(99, 102, 241, 1), rgba(139, 92, 246, 1));
   background-clip: content-box;
 }
 
-/* Input field enhancements */
+/* Enhanced Input field styling */
 input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 0 20px rgba(99, 102, 241, 0.1);
+  transform: translateY(-1px);
+  transition: all 0.3s ease;
 }
 
-/* Mobile optimizations */
+input {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:hover {
+  transform: translateY(-0.5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced Mobile optimizations */
 @media (max-width: 480px) {
   .voucher-card {
-    padding: 1rem;
+    padding: 1.25rem;
+    margin-bottom: 0.5rem;
   }
 
   .voucher-card .text-3xl {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+    font-weight: 600;
   }
 
   .glass-modal {
-    margin: 1rem;
+    margin: 0.75rem;
+    padding: 1.5rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Better touch targets */
+  button {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Larger text for readability */
+  .barcode-text {
+    font-size: 1.5rem !important;
+    letter-spacing: 0.1em;
+  }
+
+  /* Enhanced bottom navigation */
+  .bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Better error message styling */
+  .error-message {
+    font-size: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+  }
+}
+
+/* iPhone X and similar with notch */
+@media (max-width: 414px) and (orientation: portrait) {
+  .app-container {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 6rem);
+  }
+
+  .voucher-grid {
+    gap: 0.75rem;
+  }
+
+  .scan-buttons {
+    padding: 1.25rem;
+    font-size: 1rem;
+  }
+}
+
+/* Android and larger screens */
+@media (min-width: 481px) and (max-width: 768px) {
+  .max-w-md {
+    max-width: 520px;
+  }
+
+  .voucher-card {
+    padding: 1.5rem;
+  }
+
+  .scan-buttons {
     padding: 1.5rem;
   }
 }
 
-/* Dark mode support */
+/* Enhanced Dark mode support */
 @media (prefers-color-scheme: dark) {
   :root {
-    --glass-bg: rgba(0, 0, 0, 0.25);
-    --glass-border: rgba(255, 255, 255, 0.18);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --glass-bg: rgba(15, 23, 42, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+  }
+
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .voucher-card {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .text-gray-800 {
+    color: rgba(248, 250, 252, 0.9);
+  }
+
+  .text-gray-600 {
+    color: rgba(226, 232, 240, 0.7);
   }
 }
 
-/* Reduced motion */
+/* Enhanced Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -271,18 +499,67 @@ input:focus {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  .animate-float,
+  .animate-shimmer,
+  .animate-pulse-glow,
+  .animate-bounce-in,
+  .animate-success-pop,
+  .animate-wiggle {
+    animation: none !important;
+  }
+
+  .hover\:scale-105:hover,
+  .hover\:scale-\[1\.02\]:hover {
+    transform: none !important;
+  }
 }
 
-/* Touch interactions */
+/* Enhanced Touch interactions */
 @media (hover: none) and (pointer: coarse) {
   .voucher-card:active {
-    transform: scale(0.95);
-    transition: transform 0.1s ease;
+    transform: scale(0.92);
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.3);
   }
 
   .btn-glass:active {
-    transform: scale(0.95);
+    transform: scale(0.94);
+    transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .scan-button:active {
+    transform: scale(0.92);
+    box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.4);
+  }
+
+  .nav-button:active {
+    transform: scale(0.9);
     transition: transform 0.1s ease;
+  }
+
+  /* Better touch feedback */
+  .touch-feedback {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .touch-feedback::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+  }
+
+  .touch-feedback:active::after {
+    width: 200px;
+    height: 200px;
   }
 }
 
@@ -295,12 +572,32 @@ input:focus {
   }
 }
 
-/* Print styles */
+/* Enhanced Print styles */
 @media print {
   .voucher-card,
   .btn-glass {
     background: white !important;
-    border: 1px solid #ccc !important;
+    border: 2px solid #333 !important;
     box-shadow: none !important;
+    color: #000 !important;
+  }
+
+  .barcode-container {
+    background: white !important;
+    border: 2px solid #000 !important;
+  }
+
+  .animate-shimmer,
+  .animate-float,
+  .animate-pulse-glow {
+    animation: none !important;
+  }
+
+  .fixed {
+    position: static !important;
+  }
+
+  .hidden-print {
+    display: none !important;
   }
 }
