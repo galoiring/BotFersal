@@ -6,7 +6,6 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
-  Home,
   TrendingUp,
   Gift,
   Star,
@@ -38,7 +37,6 @@ interface BarcodeDisplayProps {
 const App: React.FC = () => {
   const [vouchers, setVouchers] = useState<VoucherCounts>({});
   const [totalValue, setTotalValue] = useState<number>(0);
-  const [currentView, setCurrentView] = useState<"home" | "wallet" | "scan">("home");
   const [selectedVoucher, setSelectedVoucher] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [showBarcode, setShowBarcode] = useState<boolean>(false);
@@ -49,6 +47,7 @@ const App: React.FC = () => {
   const [lastScanTime, setLastScanTime] = useState<string>("");
   const [showSuccessAnimation, setShowSuccessAnimation] = useState<boolean>(false);
   const [touchFeedback, setTouchFeedback] = useState<string>("");
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   // Haptic feedback (if available)
   const hapticFeedback = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
@@ -62,9 +61,24 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Load voucher data on component mount
+  // Load voucher data and detect dark mode on component mount
   useEffect(() => {
     loadVouchers();
+    
+    // Detect system dark mode preference
+    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    setIsDarkMode(darkModeQuery.matches);
+    
+    // Listen for changes in system preference
+    const handleColorSchemeChange = (e: MediaQueryListEvent) => {
+      setIsDarkMode(e.matches);
+    };
+    
+    darkModeQuery.addEventListener('change', handleColorSchemeChange);
+    
+    return () => {
+      darkModeQuery.removeEventListener('change', handleColorSchemeChange);
+    };
   }, []);
 
   const loadVouchers = async () => {
@@ -232,10 +246,14 @@ const App: React.FC = () => {
     onClick,
   }) => (
     <div
-      className={`relative overflow-hidden rounded-3xl p-6 transition-all duration-300 transform ${
+      className={`relative overflow-hidden rounded-3xl p-5 transition-all duration-300 transform ${
         count > 0
-          ? "bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl cursor-pointer hover:scale-[1.02] hover:shadow-3xl active:scale-95"
-          : "bg-gray-100/50 backdrop-blur-xl border border-gray-200/30 opacity-50"
+          ? isDarkMode
+            ? "bg-gray-800/95 backdrop-blur-xl border border-gray-700/40 shadow-2xl cursor-pointer hover:scale-[1.02] hover:shadow-3xl active:scale-95"
+            : "bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl cursor-pointer hover:scale-[1.02] hover:shadow-3xl active:scale-95"
+          : isDarkMode
+            ? "bg-gray-900/50 backdrop-blur-xl border border-gray-800/30 opacity-50"
+            : "bg-gray-100/50 backdrop-blur-xl border border-gray-200/30 opacity-50"
       }`}
       onClick={() => {
         if (count > 0) {
@@ -247,31 +265,43 @@ const App: React.FC = () => {
       }}
       style={{
         transform: touchFeedback === amount ? 'scale(0.95)' : 'scale(1)',
-        boxShadow: count > 0 ? '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.3) inset' : undefined
+        boxShadow: count > 0 ? 
+          isDarkMode 
+            ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset'
+            : '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.3) inset'
+          : undefined
       }}
     >
       {/* Enhanced glassmorphism with shimmer */}
-      <div className='absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent opacity-80'></div>
+      <div className={`absolute inset-0 bg-gradient-to-br opacity-80 ${
+        isDarkMode 
+          ? 'from-white/10 via-white/5 to-transparent'
+          : 'from-white/40 via-white/10 to-transparent'
+      }`}></div>
       {count > 0 && (
-        <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 animate-shimmer'></div>
+        <div className={`absolute inset-0 bg-gradient-to-r from-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 animate-shimmer ${
+          isDarkMode ? 'via-white/10' : 'via-white/20'
+        }`}></div>
       )}
 
       <div className='relative z-10 text-center'>
         <div className='flex items-center justify-center mb-3'>
-          <Gift className='w-6 h-6 text-blue-500 mr-2' />
-          <div className='text-3xl font-light text-gray-800'>₪{amount}</div>
+          <Gift className='w-5 h-5 text-blue-500 mr-2' />
+          <div className={`text-2xl font-light ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>₪{amount}</div>
         </div>
-        <div className='text-sm font-medium text-gray-500 mb-4'>שובר דיגיטלי</div>
+        <div className={`text-xs font-medium mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>שובר דיגיטלי</div>
         <div
-          className={`text-lg font-bold px-4 py-2 rounded-full transition-all duration-300 ${
+          className={`text-sm font-bold px-3 py-2 rounded-full transition-all duration-300 ${
             count > 0
               ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
-              : "bg-gray-100 text-gray-400"
+              : isDarkMode
+                ? "bg-gray-800 text-gray-500"
+                : "bg-gray-100 text-gray-400"
           }`}
         >
           {count > 0 ? (
             <div className='flex items-center justify-center gap-1'>
-              <Star className='w-4 h-4' />
+              <Star className='w-3 h-3' />
               {count} זמין
             </div>
           ) : (
@@ -282,7 +312,7 @@ const App: React.FC = () => {
 
       {/* Availability indicator */}
       {count > 0 && (
-        <div className='absolute top-3 right-3 w-3 h-3 bg-green-400 rounded-full shadow-lg animate-pulse'></div>
+        <div className='absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full shadow-lg animate-pulse'></div>
       )}
     </div>
   );
@@ -412,7 +442,7 @@ const App: React.FC = () => {
   );
 
   const HomeView: React.FC = () => (
-    <div className='h-full flex flex-col justify-between'>
+    <div className='h-full flex flex-col'>
       {/* Error Display */}
       {error && (
         <div
@@ -430,60 +460,54 @@ const App: React.FC = () => {
 
       {/* Compact Header */}
       <div
-        className='relative overflow-hidden rounded-3xl p-6 text-white mb-4'
+        className='relative overflow-hidden rounded-3xl p-4 text-white mb-6'
         style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-          boxShadow: "0 20px 40px -12px rgba(102, 126, 234, 0.4)",
+          boxShadow: "0 15px 30px -8px rgba(102, 126, 234, 0.4)",
         }}
       >
         <div className='relative z-10'>
-          <div className='flex items-center justify-between'>
+          <div className='flex items-center justify-between mb-3'>
             <div>
-              <h1 className='text-2xl font-bold mb-1'>BotFersal</h1>
-              <p className='text-white/90'>שלום {user}! 👋</p>
+              <h1 className='text-xl font-bold'>BotFersal</h1>
+              <p className='text-white/90 text-sm'>שלום {user}! 👋</p>
             </div>
             <div className='bg-white/20 backdrop-blur-sm rounded-xl p-2'>
-              <Wallet className='w-6 h-6 text-white' />
+              <Wallet className='w-5 h-5 text-white' />
             </div>
           </div>
           
-          <div className='bg-white/10 backdrop-blur-sm rounded-xl p-4 mt-4 border border-white/20'>
+          <div className='bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20'>
             <div className='flex items-center justify-between'>
               <div>
-                <div className='text-2xl font-bold'>
+                <div className='text-lg font-bold'>
                   ₪{totalValue.toLocaleString()}
                 </div>
-                <div className='text-white/90 text-sm'>סה״כ שווי</div>
+                <div className='text-white/90 text-xs'>סה״כ שווי</div>
               </div>
               <div className='text-right'>
-                <div className='text-xl font-bold text-white/90'>
+                <div className='text-lg font-bold text-white/90'>
                   {Object.values(vouchers).reduce((sum, count) => sum + count, 0)}
                 </div>
-                <div className='text-white/70 text-sm'>שוברים</div>
+                <div className='text-white/70 text-xs'>שוברים</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className='text-center text-gray-600 mb-4'>
-        <p className='text-sm'>נגישות מהירה לכל הכלים שלך</p>
-      </div>
-    </div>
-  );
-
-  const WalletView: React.FC = () => (
-    <div className='h-full flex flex-col justify-between'>
-      <div className='space-y-4'>
-        <h2 className='text-xl font-light text-gray-800 mb-4 flex items-center gap-3'>
-          <Wallet size={24} className='text-blue-600' />
+      {/* Vouchers Grid */}
+      <div className='flex-1'>
+        <h2 className={`text-lg font-medium mb-4 flex items-center gap-2 ${
+          isDarkMode ? 'text-white' : 'text-gray-800'
+        }`}>
+          <Gift size={20} className='text-blue-600' />
           השוברים שלי
         </h2>
         {loading ? (
           <div className='text-center py-8'>
             <div className='w-12 h-12 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-4'></div>
-            <p className='text-gray-500'>טוען שוברים...</p>
+            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-500'}>טוען שוברים...</p>
           </div>
         ) : (
           <div className='grid grid-cols-2 gap-3'>
@@ -501,182 +525,111 @@ const App: React.FC = () => {
     </div>
   );
 
-  const ScanView: React.FC = () => (
-    <div className='h-full flex flex-col justify-between'>
-      <div className='space-y-4'>
-        <h2 className='text-xl font-light text-gray-800 mb-4 flex items-center gap-3'>
-          <Scan size={24} className='text-blue-600' />
-          סריקת שוברים
-        </h2>
-        
-        <div className='grid grid-cols-1 gap-4'>
-          <button
-            onClick={() => {
-              hapticFeedback('medium');
-              handleScan("10bis");
-            }}
-            disabled={isScanning}
-            className='bg-gradient-to-br from-orange-500 to-red-600 text-white p-6 rounded-3xl font-bold flex items-center justify-center gap-4 transition-all duration-300 transform shadow-2xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
-          >
-            <div className='bg-white/20 p-3 rounded-2xl'>
-              {isScanning ? (
-                <div className='w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin'></div>
-              ) : (
-                <Scan size={32} />
-              )}
-            </div>
-            <div className='text-center'>
-              <div className='text-xl font-bold'>
-                {isScanning ? "סורק..." : "10bis"}
-              </div>
-              <div className='text-sm opacity-90'>סריקת שוברים</div>
-            </div>
-          </button>
 
-          <button
-            onClick={() => {
-              hapticFeedback('medium');
-              handleScan("cibus");
-            }}
-            disabled={isScanning}
-            className='bg-gradient-to-br from-green-500 to-emerald-600 text-white p-6 rounded-3xl font-bold flex items-center justify-center gap-4 transition-all duration-300 transform shadow-2xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
-          >
-            <div className='bg-white/20 p-3 rounded-2xl'>
-              {isScanning ? (
-                <div className='w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin'></div>
-              ) : (
-                <Camera size={32} />
-              )}
-            </div>
-            <div className='text-center'>
-              <div className='text-xl font-bold'>
-                {isScanning ? "סורק..." : "Cibus"}
-              </div>
-              <div className='text-sm opacity-90'>סריקת שוברים</div>
-            </div>
-          </button>
-        </div>
-        
-        {lastScanTime && (
-          <div className='text-center text-sm text-gray-500 bg-white/50 backdrop-blur-sm rounded-2xl p-3 border border-white/30'>
-            <TrendingUp className='w-4 h-4 inline mr-2' />
-            סריקה אחרונה: {lastScanTime}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
   return (
     <div
-      className='min-h-screen'
+      className={`min-h-screen transition-colors duration-300 ${
+        isDarkMode ? 'bg-gray-900' : ''
+      }`}
       style={{
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        background: isDarkMode 
+          ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
+          : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
       }}
       dir='rtl'
     >
-      {/* Enhanced Bottom Navigation */}
-      <div className='fixed bottom-0 left-0 right-0 z-40'>
-        <div className='max-w-md mx-auto'>
-          {/* Background blur with rounded top corners */}
-          <div
-            className='bg-white/95 backdrop-blur-2xl border-t-2 border-white/40 shadow-2xl rounded-t-3xl'
-            style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.92) 100%)",
-              boxShadow: "0 -10px 40px -10px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.4) inset"
-            }}
-          >
-            <div className='flex items-center justify-around py-4 px-6'>
-              <button
-                onClick={() => {
-                  hapticFeedback('light');
-                  setCurrentView("home");
-                }}
-                className={`p-4 rounded-2xl transition-all duration-300 flex flex-col items-center gap-2 min-w-[70px] ${
-                  currentView === "home"
-                    ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl scale-105"
-                    : "text-gray-600 hover:bg-gray-100/80 hover:scale-105"
-                }`}
-                style={{
-                  boxShadow: currentView === "home" ? "0 8px 25px -8px rgba(99, 102, 241, 0.4)" : undefined
-                }}
-              >
-                <Home size={24} className={currentView === "home" ? "drop-shadow-sm" : ""} />
-                <span className='text-xs font-bold'>בית</span>
-                {currentView === "home" && (
-                  <div className='absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse'></div>
+      {/* Scan Buttons - Fixed Position */}
+      <div className='fixed bottom-6 left-0 right-0 z-40'>
+        <div className='max-w-md mx-auto px-6'>
+          <div className='grid grid-cols-2 gap-3 mb-4'>
+            <button
+              onClick={() => {
+                hapticFeedback('medium');
+                handleScan("10bis");
+              }}
+              disabled={isScanning}
+              className='bg-gradient-to-br from-orange-500 to-red-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
+            >
+              <div className='bg-white/20 p-2 rounded-xl'>
+                {isScanning ? (
+                  <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                ) : (
+                  <Scan size={20} />
                 )}
-              </button>
+              </div>
+              <div className='text-center'>
+                <div className='text-sm font-bold'>
+                  {isScanning ? "סורק..." : "10bis"}
+                </div>
+              </div>
+            </button>
 
-              <button
-                onClick={() => {
-                  hapticFeedback('light');
-                  setCurrentView("wallet");
-                }}
-                className={`p-4 rounded-2xl transition-all duration-300 flex flex-col items-center gap-2 min-w-[70px] ${
-                  currentView === "wallet"
-                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-xl scale-105"
-                    : "text-gray-600 hover:bg-gray-100/80 hover:scale-105"
-                }`}
-                style={{
-                  boxShadow: currentView === "wallet" ? "0 8px 25px -8px rgba(34, 197, 94, 0.4)" : undefined
-                }}
-              >
-                <Wallet size={24} className={currentView === "wallet" ? "drop-shadow-sm" : ""} />
-                <span className='text-xs font-bold'>שוברים</span>
-                {currentView === "wallet" && (
-                  <div className='absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse'></div>
+            <button
+              onClick={() => {
+                hapticFeedback('medium');
+                handleScan("cibus");
+              }}
+              disabled={isScanning}
+              className='bg-gradient-to-br from-green-500 to-emerald-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
+            >
+              <div className='bg-white/20 p-2 rounded-xl'>
+                {isScanning ? (
+                  <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                ) : (
+                  <Camera size={20} />
                 )}
-              </button>
-
-              <button
-                onClick={() => {
-                  hapticFeedback('light');
-                  setCurrentView("scan");
-                }}
-                className={`p-4 rounded-2xl transition-all duration-300 flex flex-col items-center gap-2 min-w-[70px] ${
-                  currentView === "scan"
-                    ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-xl scale-105"
-                    : "text-gray-600 hover:bg-gray-100/80 hover:scale-105"
-                }`}
-                style={{
-                  boxShadow: currentView === "scan" ? "0 8px 25px -8px rgba(255, 69, 0, 0.4)" : undefined
-                }}
-              >
-                <Scan size={24} className={currentView === "scan" ? "drop-shadow-sm" : ""} />
-                <span className='text-xs font-bold'>סריקה</span>
-                {currentView === "scan" && (
-                  <div className='absolute -top-1 -right-1 w-2 h-2 bg-orange-400 rounded-full animate-pulse'></div>
-                )}
-              </button>
+              </div>
+              <div className='text-center'>
+                <div className='text-sm font-bold'>
+                  {isScanning ? "סורק..." : "Cibus"}
+                </div>
+              </div>
+            </button>
+          </div>
+          
+          {lastScanTime && (
+            <div className={`text-center text-xs p-2 rounded-xl mb-2 ${
+              isDarkMode 
+                ? 'text-gray-300 bg-gray-800/50 border border-gray-700/30' 
+                : 'text-gray-500 bg-white/50 border border-white/30'
+            } backdrop-blur-sm`}>
+              <TrendingUp className='w-3 h-3 inline mr-1' />
+              סריקה אחרונה: {lastScanTime}
             </div>
-            
-            {/* Home indicator line */}
-            <div className='flex justify-center pb-2'>
-              <div className='w-32 h-1 bg-gray-300 rounded-full'></div>
-            </div>
+          )}
+          
+          {/* Home indicator */}
+          <div className='flex justify-center'>
+            <div className={`w-32 h-1 rounded-full ${
+              isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
+            }`}></div>
           </div>
         </div>
       </div>
 
-      {/* Main Content with Bottom Padding for Enhanced Navbar */}
-      <div className='max-w-md mx-auto p-6 pb-32 h-screen flex flex-col'>
+      {/* Main Content */}
+      <div className='max-w-md mx-auto p-6 pb-40 h-screen flex flex-col'>
         <div className='flex-1 overflow-hidden'>
-          {currentView === "home" && <HomeView />}
-          {currentView === "wallet" && <WalletView />}
-          {currentView === "scan" && <ScanView />}
+          <HomeView />
         </div>
         
-        {/* Small refresh button at bottom */}
-        <div className='flex justify-center pb-20'>
+        {/* Small refresh button */}
+        <div className='flex justify-center pb-6'>
           <button
             onClick={() => {
               hapticFeedback('light');
               loadVouchers();
             }}
-            className='bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg border border-white/30 hover:scale-105 transition-all duration-200'
+            className={`backdrop-blur-sm p-3 rounded-full shadow-lg border hover:scale-105 transition-all duration-200 ${
+              isDarkMode 
+                ? 'bg-gray-800/80 border-gray-700/30 hover:bg-gray-700/80'
+                : 'bg-white/80 border-white/30 hover:bg-white/90'
+            }`}
           >
-            <RefreshCw size={16} className={`text-gray-600 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw size={18} className={`${loading ? 'animate-spin' : ''} ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            }`} />
           </button>
         </div>
       </div>
