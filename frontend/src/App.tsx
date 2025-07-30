@@ -7,9 +7,7 @@ import {
   CheckCircle,
   XCircle,
   Home,
-  Settings,
   TrendingUp,
-  Zap,
   Gift,
   Star,
 } from "lucide-react";
@@ -40,7 +38,7 @@ interface BarcodeDisplayProps {
 const App: React.FC = () => {
   const [vouchers, setVouchers] = useState<VoucherCounts>({});
   const [totalValue, setTotalValue] = useState<number>(0);
-  const [currentView, setCurrentView] = useState<"home" | "settings">("home");
+  const [currentView, setCurrentView] = useState<"home" | "wallet" | "scan">("home");
   const [selectedVoucher, setSelectedVoucher] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [showBarcode, setShowBarcode] = useState<boolean>(false);
@@ -414,11 +412,11 @@ const App: React.FC = () => {
   );
 
   const HomeView: React.FC = () => (
-    <div className='space-y-6'>
+    <div className='h-full flex flex-col justify-between'>
       {/* Error Display */}
       {error && (
         <div
-          className={`p-4 rounded-2xl text-white text-center font-medium ${
+          className={`p-3 rounded-2xl text-white text-center font-medium mb-4 ${
             error.startsWith("✅")
               ? "bg-green-500/90"
               : error.startsWith("ℹ️")
@@ -430,163 +428,65 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Enhanced Header Card */}
+      {/* Compact Header */}
       <div
-        className='relative overflow-hidden rounded-3xl p-8 text-white animate-scale-up'
+        className='relative overflow-hidden rounded-3xl p-6 text-white mb-4'
         style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-          boxShadow: "0 35px 70px -20px rgba(102, 126, 234, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+          boxShadow: "0 20px 40px -12px rgba(102, 126, 234, 0.4)",
         }}
       >
-        {/* Enhanced animated background elements */}
-        <div className='absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 animate-float'></div>
-        <div className='absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 -translate-x-16 animate-float' style={{ animationDelay: '1s' }}></div>
-        <div className='absolute top-1/2 left-1/2 w-24 h-24 bg-white/5 rounded-full -translate-x-12 -translate-y-12 animate-pulse'></div>
-
         <div className='relative z-10'>
-          <div className='flex items-center justify-between mb-6'>
+          <div className='flex items-center justify-between'>
             <div>
-              <h1 className='text-3xl font-bold mb-2 drop-shadow-lg'>BotFersal</h1>
-              <p className='text-white/90 text-lg'>שלום {user}! 👋</p>
+              <h1 className='text-2xl font-bold mb-1'>BotFersal</h1>
+              <p className='text-white/90'>שלום {user}! 👋</p>
             </div>
-            <div className='bg-white/20 backdrop-blur-sm rounded-2xl p-3'>
-              <Wallet className='w-8 h-8 text-white drop-shadow-lg' />
+            <div className='bg-white/20 backdrop-blur-sm rounded-xl p-2'>
+              <Wallet className='w-6 h-6 text-white' />
             </div>
           </div>
           
-          <div className='bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20'>
+          <div className='bg-white/10 backdrop-blur-sm rounded-xl p-4 mt-4 border border-white/20'>
             <div className='flex items-center justify-between'>
               <div>
-                <div className='text-4xl font-bold mb-2 drop-shadow-lg'>
+                <div className='text-2xl font-bold'>
                   ₪{totalValue.toLocaleString()}
                 </div>
-                <div className='text-white/90 font-semibold text-lg'>סה״כ שווי שוברים</div>
+                <div className='text-white/90 text-sm'>סה״כ שווי</div>
               </div>
               <div className='text-right'>
-                <div className='text-2xl font-bold text-white/90'>
+                <div className='text-xl font-bold text-white/90'>
                   {Object.values(vouchers).reduce((sum, count) => sum + count, 0)}
                 </div>
-                <div className='text-white/70 text-sm'>סך שוברים</div>
+                <div className='text-white/70 text-sm'>שוברים</div>
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Subtle shine effect */}
-        <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-1000 animate-shimmer'></div>
       </div>
 
-      {/* Enhanced Quick Actions */}
+      {/* Quick Stats */}
+      <div className='text-center text-gray-600 mb-4'>
+        <p className='text-sm'>נגישות מהירה לכל הכלים שלך</p>
+      </div>
+    </div>
+  );
+
+  const WalletView: React.FC = () => (
+    <div className='h-full flex flex-col justify-between'>
       <div className='space-y-4'>
-        <div className='grid grid-cols-2 gap-4'>
-          <button
-            onClick={() => {
-              hapticFeedback('medium');
-              handleScan("10bis");
-            }}
-            disabled={isScanning}
-            className='bg-gradient-to-br from-orange-500 to-red-600 text-white p-6 rounded-3xl font-bold flex flex-col items-center gap-3 transition-all duration-300 transform backdrop-blur-xl border border-orange-300/30 shadow-2xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
-            style={{
-              boxShadow: "0 25px 50px -12px rgba(255, 69, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-            }}
-          >
-            <div className='absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent opacity-60 rounded-3xl'></div>
-            <div className='relative z-10 flex flex-col items-center gap-3'>
-              <div className='bg-white/20 p-3 rounded-2xl backdrop-blur-sm'>
-                {isScanning ? (
-                  <div className='w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin'></div>
-                ) : (
-                  <Scan size={32} className='drop-shadow-lg' />
-                )}
-              </div>
-              <div className='text-center'>
-                <div className='text-lg font-bold mb-1'>
-                  {isScanning ? "סורק..." : "10bis"}
-                </div>
-                <div className='text-xs opacity-90'>סריקת שוברים</div>
-              </div>
-            </div>
-            {!isScanning && (
-              <div className='absolute top-2 right-2'>
-                <Zap className='w-5 h-5 text-yellow-300 animate-pulse' />
-              </div>
-            )}
-          </button>
-
-          <button
-            onClick={() => {
-              hapticFeedback('medium');
-              handleScan("cibus");
-            }}
-            disabled={isScanning}
-            className='bg-gradient-to-br from-green-500 to-emerald-600 text-white p-6 rounded-3xl font-bold flex flex-col items-center gap-3 transition-all duration-300 transform backdrop-blur-xl border border-green-300/30 shadow-2xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
-            style={{
-              boxShadow: "0 25px 50px -12px rgba(34, 197, 94, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-            }}
-          >
-            <div className='absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent opacity-60 rounded-3xl'></div>
-            <div className='relative z-10 flex flex-col items-center gap-3'>
-              <div className='bg-white/20 p-3 rounded-2xl backdrop-blur-sm'>
-                {isScanning ? (
-                  <div className='w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin'></div>
-                ) : (
-                  <Camera size={32} className='drop-shadow-lg' />
-                )}
-              </div>
-              <div className='text-center'>
-                <div className='text-lg font-bold mb-1'>
-                  {isScanning ? "סורק..." : "Cibus"}
-                </div>
-                <div className='text-xs opacity-90'>סריקת שוברים</div>
-              </div>
-            </div>
-            {!isScanning && (
-              <div className='absolute top-2 right-2'>
-                <Zap className='w-5 h-5 text-yellow-300 animate-pulse' />
-              </div>
-            )}
-          </button>
-        </div>
-        
-        {lastScanTime && (
-          <div className='text-center text-sm text-gray-500 bg-white/50 backdrop-blur-sm rounded-2xl p-3 border border-white/30'>
-            <TrendingUp className='w-4 h-4 inline mr-2' />
-            סריקה אחרונה: {lastScanTime}
-          </div>
-        )}
-      </div>
-
-      {/* Vouchers Grid */}
-      <div>
         <h2 className='text-xl font-light text-gray-800 mb-4 flex items-center gap-3'>
           <Wallet size={24} className='text-blue-600' />
           השוברים שלי
         </h2>
         {loading ? (
-          <div className='text-center py-12'>
-            <div className='relative mb-6'>
-              {/* Enhanced loading animation */}
-              <div className='w-20 h-20 border-4 border-blue-100 rounded-full animate-spin mx-auto'></div>
-              <div className='absolute inset-0 w-20 h-20 border-4 border-transparent border-t-blue-500 border-r-purple-500 rounded-full animate-spin mx-auto' style={{ animation: 'spin 0.8s linear infinite reverse' }}></div>
-              <div className='absolute inset-0 flex items-center justify-center'>
-                <Wallet className='w-8 h-8 text-blue-500 animate-pulse' />
-              </div>
-            </div>
-            
-            <div className='space-y-2'>
-              <h3 className='text-lg font-bold text-gray-700'>טוען שוברים...</h3>
-              <p className='text-gray-500'>מעדכן את הנתונים שלך</p>
-            </div>
-            
-            {/* Loading dots */}
-            <div className='flex justify-center space-x-2 mt-6'>
-              <div className='w-2 h-2 bg-blue-400 rounded-full animate-bounce'></div>
-              <div className='w-2 h-2 bg-purple-400 rounded-full animate-bounce' style={{ animationDelay: '0.1s' }}></div>
-              <div className='w-2 h-2 bg-blue-400 rounded-full animate-bounce' style={{ animationDelay: '0.2s' }}></div>
-            </div>
+          <div className='text-center py-8'>
+            <div className='w-12 h-12 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-4'></div>
+            <p className='text-gray-500'>טוען שוברים...</p>
           </div>
         ) : (
-          <div className='grid grid-cols-2 gap-4'>
+          <div className='grid grid-cols-2 gap-3'>
             {Object.entries(vouchers).map(([amount, count]) => (
               <VoucherCard
                 key={amount}
@@ -601,53 +501,68 @@ const App: React.FC = () => {
     </div>
   );
 
-  const SettingsView: React.FC = () => (
-    <div className='space-y-8'>
-      <h2 className='text-2xl font-light text-gray-800'>הגדרות</h2>
+  const ScanView: React.FC = () => (
+    <div className='h-full flex flex-col justify-between'>
+      <div className='space-y-4'>
+        <h2 className='text-xl font-light text-gray-800 mb-4 flex items-center gap-3'>
+          <Scan size={24} className='text-blue-600' />
+          סריקת שוברים
+        </h2>
+        
+        <div className='grid grid-cols-1 gap-4'>
+          <button
+            onClick={() => {
+              hapticFeedback('medium');
+              handleScan("10bis");
+            }}
+            disabled={isScanning}
+            className='bg-gradient-to-br from-orange-500 to-red-600 text-white p-6 rounded-3xl font-bold flex items-center justify-center gap-4 transition-all duration-300 transform shadow-2xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
+          >
+            <div className='bg-white/20 p-3 rounded-2xl'>
+              {isScanning ? (
+                <div className='w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin'></div>
+              ) : (
+                <Scan size={32} />
+              )}
+            </div>
+            <div className='text-center'>
+              <div className='text-xl font-bold'>
+                {isScanning ? "סורק..." : "10bis"}
+              </div>
+              <div className='text-sm opacity-90'>סריקת שוברים</div>
+            </div>
+          </button>
 
-      <div
-        className='bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-white/30 shadow-2xl space-y-6'
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%)",
-          boxShadow:
-            "0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-        }}
-      >
-        <div>
-          <label className='block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide'>
-            משתמש
-          </label>
-          <input
-            type='text'
-            value={user}
-            disabled
-            className='w-full p-4 border border-gray-200/50 rounded-2xl bg-gray-50/80 backdrop-blur-sm font-medium text-gray-600'
-          />
+          <button
+            onClick={() => {
+              hapticFeedback('medium');
+              handleScan("cibus");
+            }}
+            disabled={isScanning}
+            className='bg-gradient-to-br from-green-500 to-emerald-600 text-white p-6 rounded-3xl font-bold flex items-center justify-center gap-4 transition-all duration-300 transform shadow-2xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
+          >
+            <div className='bg-white/20 p-3 rounded-2xl'>
+              {isScanning ? (
+                <div className='w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin'></div>
+              ) : (
+                <Camera size={32} />
+              )}
+            </div>
+            <div className='text-center'>
+              <div className='text-xl font-bold'>
+                {isScanning ? "סורק..." : "Cibus"}
+              </div>
+              <div className='text-sm opacity-90'>סריקת שוברים</div>
+            </div>
+          </button>
         </div>
-
-        <div>
-          <label className='block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide'>
-            API Endpoint
-          </label>
-          <input
-            type='text'
-            value={API_BASE}
-            disabled
-            className='w-full p-4 border border-gray-200/50 rounded-2xl bg-gray-50/80 backdrop-blur-sm font-medium text-gray-600 text-xs'
-          />
-        </div>
-
-        <button
-          onClick={loadVouchers}
-          className='w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-xl'
-          style={{
-            boxShadow:
-              "0 20px 40px -12px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
-          }}
-        >
-          בדוק חיבור לשרת
-        </button>
+        
+        {lastScanTime && (
+          <div className='text-center text-sm text-gray-500 bg-white/50 backdrop-blur-sm rounded-2xl p-3 border border-white/30'>
+            <TrendingUp className='w-4 h-4 inline mr-2' />
+            סריקה אחרונה: {lastScanTime}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -695,38 +610,43 @@ const App: React.FC = () => {
 
               <button
                 onClick={() => {
-                  hapticFeedback('medium');
-                  loadVouchers();
+                  hapticFeedback('light');
+                  setCurrentView("wallet");
                 }}
-                className='p-4 rounded-2xl text-gray-600 hover:bg-gradient-to-r hover:from-green-100 hover:to-blue-100 hover:text-blue-600 transition-all duration-300 flex flex-col items-center gap-2 hover:scale-105 min-w-[70px]'
+                className={`p-4 rounded-2xl transition-all duration-300 flex flex-col items-center gap-2 min-w-[70px] ${
+                  currentView === "wallet"
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-xl scale-105"
+                    : "text-gray-600 hover:bg-gray-100/80 hover:scale-105"
+                }`}
+                style={{
+                  boxShadow: currentView === "wallet" ? "0 8px 25px -8px rgba(34, 197, 94, 0.4)" : undefined
+                }}
               >
-                <div className='relative'>
-                  <RefreshCw size={24} className={loading ? 'animate-spin' : ''} />
-                  {!loading && (
-                    <div className='absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-ping'></div>
-                  )}
-                </div>
-                <span className='text-xs font-bold'>סריקת</span>
+                <Wallet size={24} className={currentView === "wallet" ? "drop-shadow-sm" : ""} />
+                <span className='text-xs font-bold'>שוברים</span>
+                {currentView === "wallet" && (
+                  <div className='absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse'></div>
+                )}
               </button>
 
               <button
                 onClick={() => {
                   hapticFeedback('light');
-                  setCurrentView("settings");
+                  setCurrentView("scan");
                 }}
                 className={`p-4 rounded-2xl transition-all duration-300 flex flex-col items-center gap-2 min-w-[70px] ${
-                  currentView === "settings"
-                    ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-xl scale-105"
+                  currentView === "scan"
+                    ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-xl scale-105"
                     : "text-gray-600 hover:bg-gray-100/80 hover:scale-105"
                 }`}
                 style={{
-                  boxShadow: currentView === "settings" ? "0 8px 25px -8px rgba(168, 85, 247, 0.4)" : undefined
+                  boxShadow: currentView === "scan" ? "0 8px 25px -8px rgba(255, 69, 0, 0.4)" : undefined
                 }}
               >
-                <Settings size={24} className={currentView === "settings" ? "drop-shadow-sm" : ""} />
-                <span className='text-xs font-bold'>הגדרות</span>
-                {currentView === "settings" && (
-                  <div className='absolute -top-1 -right-1 w-2 h-2 bg-pink-400 rounded-full animate-pulse'></div>
+                <Scan size={24} className={currentView === "scan" ? "drop-shadow-sm" : ""} />
+                <span className='text-xs font-bold'>סריקה</span>
+                {currentView === "scan" && (
+                  <div className='absolute -top-1 -right-1 w-2 h-2 bg-orange-400 rounded-full animate-pulse'></div>
                 )}
               </button>
             </div>
@@ -740,9 +660,25 @@ const App: React.FC = () => {
       </div>
 
       {/* Main Content with Bottom Padding for Enhanced Navbar */}
-      <div className='max-w-md mx-auto p-6 pb-32'>
-        {currentView === "home" && <HomeView />}
-        {currentView === "settings" && <SettingsView />}
+      <div className='max-w-md mx-auto p-6 pb-32 h-screen flex flex-col'>
+        <div className='flex-1 overflow-hidden'>
+          {currentView === "home" && <HomeView />}
+          {currentView === "wallet" && <WalletView />}
+          {currentView === "scan" && <ScanView />}
+        </div>
+        
+        {/* Small refresh button at bottom */}
+        <div className='flex justify-center pb-20'>
+          <button
+            onClick={() => {
+              hapticFeedback('light');
+              loadVouchers();
+            }}
+            className='bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg border border-white/30 hover:scale-105 transition-all duration-200'
+          >
+            <RefreshCw size={16} className={`text-gray-600 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {/* Barcode Modal */}
