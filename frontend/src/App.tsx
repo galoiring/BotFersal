@@ -33,6 +33,43 @@ interface BarcodeDisplayProps {
   onCancel: () => void;
 }
 
+// Device fingerprinting function
+const generateDeviceFingerprint = (): string => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('Device fingerprint', 2, 2);
+  }
+  
+  const fingerprint = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    new Date().getTimezoneOffset(),
+    canvas.toDataURL(),
+    navigator.hardwareConcurrency || 0,
+    (navigator as any).deviceMemory || 0
+  ].join('|');
+  
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(36);
+};
+
+interface DeviceUser {
+  deviceId: string;
+  userName: string;
+  registeredAt: string;
+}
+
 const App: React.FC = () => {
   const [vouchers, setVouchers] = useState<VoucherCounts>({});
   const [totalValue, setTotalValue] = useState<number>(0);
@@ -42,11 +79,14 @@ const App: React.FC = () => {
   const [barcodeData, setBarcodeData] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-  const [user] = useState<string>("jewbaca1");
+  const [user, setUser] = useState<string>("");
   const [lastScanTime, setLastScanTime] = useState<string>("");
   const [showSuccessAnimation, setShowSuccessAnimation] = useState<boolean>(false);
   const [touchFeedback, setTouchFeedback] = useState<string>("");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [showUserSelection, setShowUserSelection] = useState<boolean>(false);
+  const [deviceId] = useState<string>(() => generateDeviceFingerprint());
 
   // Haptic feedback (if available)
   const hapticFeedback = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
@@ -60,10 +100,53 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Authentication and device detection
+  const authenticateDevice = useCallback(() => {
+    const storedDevices = localStorage.getItem('registeredDevices');
+    const devices: DeviceUser[] = storedDevices ? JSON.parse(storedDevices) : [];
+    
+    // Check if current device is registered
+    const currentDevice = devices.find(d => d.deviceId === deviceId);
+    
+    if (currentDevice) {
+      setUser(currentDevice.userName === 'User1' ? 'jewbaca1' : 'wife_user'); // Map to API users
+      setIsAuthenticated(true);
+      console.log(`Authenticated as: ${currentDevice.userName}`);
+    } else {
+      // Device not registered, show user selection
+      setShowUserSelection(true);
+    }
+  }, [deviceId]);
+  
+  const registerDevice = (userName: string) => {
+    const storedDevices = localStorage.getItem('registeredDevices');
+    const devices: DeviceUser[] = storedDevices ? JSON.parse(storedDevices) : [];
+    
+    // Check if we already have 2 devices registered
+    if (devices.length >= 2 && !devices.find(d => d.deviceId === deviceId)) {
+      setError('❌ מקסימום 2 מכשירים רשומים. אנא צור קשר למחיקת מכשיר.');
+      return;
+    }
+    
+    const newDevice: DeviceUser = {
+      deviceId,
+      userName,
+      registeredAt: new Date().toISOString()
+    };
+    
+    // Remove existing registration for this device (if any)
+    const filteredDevices = devices.filter(d => d.deviceId !== deviceId);
+    filteredDevices.push(newDevice);
+    
+    localStorage.setItem('registeredDevices', JSON.stringify(filteredDevices));
+    setUser(userName === 'User1' ? 'jewbaca1' : 'wife_user');
+    setIsAuthenticated(true);
+    setShowUserSelection(false);
+    setError('');
+  };
+
   // Load voucher data and detect dark mode on component mount
   useEffect(() => {
-    loadVouchers();
-    
     // Detect system dark mode preference
     const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
     setIsDarkMode(darkModeQuery.matches);
@@ -75,10 +158,20 @@ const App: React.FC = () => {
     
     darkModeQuery.addEventListener('change', handleColorSchemeChange);
     
+    // Authenticate device first
+    authenticateDevice();
+    
     return () => {
       darkModeQuery.removeEventListener('change', handleColorSchemeChange);
     };
-  }, []);
+  }, [authenticateDevice]);
+  
+  // Load vouchers when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadVouchers();
+    }
+  }, [isAuthenticated, user]);
 
   const loadVouchers = async () => {
     try {
@@ -521,6 +614,115 @@ const App: React.FC = () => {
   );
 
 
+
+  // User Selection Screen
+  const UserSelectionScreen: React.FC = () => (
+    <div className='flex items-center justify-center min-h-screen p-6'>
+      <div
+        className={`max-w-sm w-full rounded-3xl p-8 backdrop-blur-xl border shadow-2xl ${
+          isDarkMode 
+            ? 'bg-gray-800/95 border-gray-700/50'
+            : 'bg-white/95 border-white/50'
+        }`}
+      >
+        {/* Logo/Header */}
+        <div className='text-center mb-8'>
+          <div className='bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-2xl w-16 h-16 mx-auto mb-4 flex items-center justify-center'>
+            <Wallet className='w-8 h-8 text-white' />
+          </div>
+          <h1 className={`text-2xl font-bold mb-2 ${
+            isDarkMode ? 'text-white' : 'text-gray-800'
+          }`}>BotFersal</h1>
+          <p className={`text-sm ${
+            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+          }`}>בחר משתמש עבור המכשיר הזה</p>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className='p-3 rounded-2xl text-white text-center font-medium mb-4 bg-red-500/90'>
+            {error}
+          </div>
+        )}
+
+        {/* User Selection Buttons */}
+        <div className='space-y-4'>
+          <button
+            onClick={() => registerDevice('User1')}
+            className='w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95'
+          >
+            <div className='bg-white/20 p-2 rounded-xl'>
+              <Wallet className='w-5 h-5' />
+            </div>
+            <span>משתמש ראשי</span>
+          </button>
+          
+          <button
+            onClick={() => registerDevice('User2')}
+            className='w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95'
+          >
+            <div className='bg-white/20 p-2 rounded-xl'>
+              <Star className='w-5 h-5' />
+            </div>
+            <span>משתמש שני</span>
+          </button>
+        </div>
+
+        {/* Device Info */}
+        <div className='mt-6 text-center'>
+          <p className={`text-xs ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            המכשיר יזוכר עבור השימושים הבאים
+          </p>
+          <p className={`text-xs mt-1 font-mono ${
+            isDarkMode ? 'text-gray-500' : 'text-gray-400'
+          }`}>
+            ID: {deviceId.substring(0, 8)}...
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (showUserSelection) {
+    return (
+      <div
+        className={`min-h-screen transition-colors duration-300 ${
+          isDarkMode ? 'bg-gray-900' : ''
+        }`}
+        style={{
+          background: isDarkMode 
+            ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
+            : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        }}
+        dir='rtl'
+      >
+        <UserSelectionScreen />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div
+        className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
+          isDarkMode ? 'bg-gray-900' : ''
+        }`}
+        style={{
+          background: isDarkMode 
+            ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
+            : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        }}
+        dir='rtl'
+      >
+        <div className='text-center'>
+          <div className='w-16 h-16 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-4'></div>
+          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>מזהה מכשיר...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
