@@ -109,7 +109,7 @@ const App: React.FC = () => {
     const currentDevice = devices.find(d => d.deviceId === deviceId);
     
     if (currentDevice) {
-      setUser(currentDevice.userName === 'User1' ? 'jewbaca1' : 'wife_user'); // Map to API users
+      setUser(currentDevice.userName === 'Gal' ? 'jewbaca1' : 'rinat_user'); // Map to API users
       setIsAuthenticated(true);
       console.log(`Authenticated as: ${currentDevice.userName}`);
     } else {
@@ -124,7 +124,7 @@ const App: React.FC = () => {
     
     // Check if we already have 2 devices registered
     if (devices.length >= 2 && !devices.find(d => d.deviceId === deviceId)) {
-      setError('❌ מקסימום 2 מכשירים רשומים. אנא צור קשר למחיקת מכשיר.');
+      setError('❌ Maximum 2 devices registered. Please contact admin to remove a device.');
       return;
     }
     
@@ -139,7 +139,7 @@ const App: React.FC = () => {
     filteredDevices.push(newDevice);
     
     localStorage.setItem('registeredDevices', JSON.stringify(filteredDevices));
-    setUser(userName === 'User1' ? 'jewbaca1' : 'wife_user');
+    setUser(userName === 'Gal' ? 'jewbaca1' : 'rinat_user');
     setIsAuthenticated(true);
     setShowUserSelection(false);
     setError('');
@@ -227,12 +227,12 @@ const App: React.FC = () => {
         setShowBarcode(true);
       } else {
         hapticFeedback('heavy');
-        setError(data.message || `❌ אין שוברים זמינים על סך ${amount}₪`);
+        setError(data.message || `❌ No vouchers available for ${amount}₪`);
         setTimeout(() => setError(""), 4000);
       }
     } catch (err: any) {
       hapticFeedback('heavy');
-      setError("❌ שגיאה בקבלת השובר");
+      setError("❌ Error getting voucher");
       setTimeout(() => setError(""), 4000);
     } finally {
       setLoading(false);
@@ -266,7 +266,7 @@ const App: React.FC = () => {
       setSelectedVoucher(null);
       
       // Success message
-      setError("✅ השובר סומן כמשומש בהצלחה!");
+      setError("✅ Voucher marked as used successfully!");
       setTimeout(() => {
         setError("");
         setShowSuccessAnimation(false);
@@ -274,7 +274,7 @@ const App: React.FC = () => {
       
     } catch (err: any) {
       hapticFeedback('heavy');
-      setError("❌ שגיאה בעדכון השובר");
+      setError("❌ Error updating voucher");
       setTimeout(() => setError(""), 4000);
     }
   };
@@ -314,12 +314,12 @@ const App: React.FC = () => {
             .map(([amount, count]) => `${count}x ${amount}₪`)
             .join(', ');
           
-          setError(`🎉 נוספו ${data.data.added_count} שוברים חדשים!${detailsText ? `\n${detailsText}` : ''}`);
+          setError(`🎉 Added ${data.data.added_count} new vouchers!${detailsText ? `\n${detailsText}` : ''}`);  
           await loadVouchers(); // Reload vouchers
           setTimeout(() => setShowSuccessAnimation(false), 2000);
         } else {
           hapticFeedback('light');
-          setError("ℹ️ לא נמצאו שוברים חדשים");
+          setError("ℹ️ No new vouchers found");
         }
         // Update last scan time
         setLastScanTime(new Date().toLocaleTimeString('he-IL', { 
@@ -328,11 +328,11 @@ const App: React.FC = () => {
         }));
       } else {
         hapticFeedback('heavy');
-        setError(data.message || "❌ שגיאה בסריקה");
+        setError(data.message || "❌ Scanning error");
       }
     } catch (err: any) {
       hapticFeedback('heavy');
-      setError("❌ שגיאה בחיבור לשרת");
+      setError("❌ Server connection error");
     } finally {
       setIsScanning(false);
       // Clear message after 5 seconds
@@ -384,7 +384,7 @@ const App: React.FC = () => {
           <Gift className='w-4 h-4 text-blue-500 mr-1' />
           <div className={`text-xl font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>₪{amount}</div>
         </div>
-        <div className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>שובר דיגיטלי</div>
+        <div className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Digital Voucher</div>
         <div
           className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-300 ${
             count > 0
@@ -397,10 +397,10 @@ const App: React.FC = () => {
           {count > 0 ? (
             <div className='flex items-center justify-center gap-1'>
               <Star className='w-3 h-3' />
-              {count} זמין
+              {count} Available
             </div>
           ) : (
-            "אזל"
+            "Sold Out"
           )}
         </div>
       </div>
@@ -437,7 +437,7 @@ const App: React.FC = () => {
               <Gift className='w-6 h-6 text-white' />
             </div>
             <h3 className='text-2xl font-bold text-gray-800'>
-              שובר דיגיטלי
+              Digital Voucher
             </h3>
           </div>
           <button
@@ -452,7 +452,7 @@ const App: React.FC = () => {
         <div className='text-center mb-8'>
           <div className='bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl p-4 mb-6'>
             <div className='text-4xl font-bold mb-2'>₪{amount}</div>
-            <div className='text-blue-100 font-medium'>ערך השובר</div>
+            <div className='text-blue-100 font-medium'>Voucher Value</div>
           </div>
         </div>
 
@@ -477,14 +477,14 @@ const App: React.FC = () => {
           </div>
           
           <div className='text-center mt-4 text-base text-gray-700 font-medium'>
-            🛒 הצג את הברקוד לצורך תשלום
+            🛒 Show barcode for payment
           </div>
         </div>
 
         {/* Enhanced Action Buttons */}
         <div className='text-center'>
           <p className='text-gray-700 mb-6 font-bold text-xl'>
-            השתמשת בשובר? 🍽️
+            Did you use the voucher? 🍽️
           </p>
           <div className='flex gap-4'>
             <button
@@ -499,8 +499,8 @@ const App: React.FC = () => {
             >
               <CheckCircle size={28} />
               <div>
-                <div className='text-lg'>כן, השתמשתי!</div>
-                <div className='text-xs opacity-90'>סמן כמשומש</div>
+                <div className='text-lg'>Yes, I used it!</div>
+                <div className='text-xs opacity-90'>Mark as used</div>
               </div>
             </button>
             <button
@@ -515,14 +515,14 @@ const App: React.FC = () => {
             >
               <XCircle size={28} />
               <div>
-                <div className='text-lg'>עוד לא</div>
-                <div className='text-xs opacity-70'>שמור לימים אחרים</div>
+                <div className='text-lg'>Not yet</div>
+                <div className='text-xs opacity-70'>Save for later</div>
               </div>
             </button>
           </div>
           
           <div className='mt-4 text-xs text-gray-500 bg-gray-50 rounded-xl p-3'>
-            💡 טיפ: תוכל לשמור את השובר ולהשתמש בו מאוחר יותר
+            💡 Tip: You can save the voucher and use it later
           </div>
         </div>
       </div>
@@ -558,7 +558,7 @@ const App: React.FC = () => {
           <div className='flex items-center justify-between mb-2'>
             <div>
               <h1 className='text-lg font-bold'>BotFersal</h1>
-              <p className='text-white/90 text-sm'>שלום {user}! 👋</p>
+              <p className='text-white/90 text-sm'>Hello {user === 'jewbaca1' ? 'Gal' : 'Rinat'}! 👋</p>
             </div>
             <div className='bg-white/20 backdrop-blur-sm rounded-xl p-2'>
               <Wallet className='w-4 h-4 text-white' />
@@ -571,13 +571,13 @@ const App: React.FC = () => {
                 <div className='text-base font-bold'>
                   ₪{totalValue.toLocaleString()}
                 </div>
-                <div className='text-white/90 text-xs'>סה״כ שווי</div>
+                <div className='text-white/90 text-xs'>Total Value</div>
               </div>
               <div className='text-right'>
                 <div className='text-base font-bold text-white/90'>
                   {Object.values(vouchers).reduce((sum, count) => sum + count, 0)}
                 </div>
-                <div className='text-white/70 text-xs'>שוברים</div>
+                <div className='text-white/70 text-xs'>Vouchers</div>
               </div>
             </div>
           </div>
@@ -590,12 +590,12 @@ const App: React.FC = () => {
           isDarkMode ? 'text-white' : 'text-gray-800'
         }`}>
           <Gift size={18} className='text-blue-600' />
-          השוברים שלי
+          My Vouchers
         </h2>
         {loading ? (
           <div className='text-center py-8'>
             <div className='w-10 h-10 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-3'></div>
-            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>טוען שוברים...</p>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Loading vouchers...</p>
           </div>
         ) : (
           <div className='grid grid-cols-2 gap-3 pb-4'>
@@ -635,7 +635,7 @@ const App: React.FC = () => {
           }`}>BotFersal</h1>
           <p className={`text-sm ${
             isDarkMode ? 'text-gray-300' : 'text-gray-600'
-          }`}>בחר משתמש עבור המכשיר הזה</p>
+          }`}>Who is using this device?</p>
         </div>
 
         {/* Error Display */}
@@ -648,23 +648,23 @@ const App: React.FC = () => {
         {/* User Selection Buttons */}
         <div className='space-y-4'>
           <button
-            onClick={() => registerDevice('User1')}
+            onClick={() => registerDevice('Gal')}
             className='w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95'
           >
             <div className='bg-white/20 p-2 rounded-xl'>
               <Wallet className='w-5 h-5' />
             </div>
-            <span>משתמש ראשי</span>
+            <span>Gal 👨‍💼</span>
           </button>
           
           <button
-            onClick={() => registerDevice('User2')}
-            className='w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95'
+            onClick={() => registerDevice('Rinat')}
+            className='w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95'
           >
             <div className='bg-white/20 p-2 rounded-xl'>
               <Star className='w-5 h-5' />
             </div>
-            <span>משתמש שני</span>
+            <span>Rinat 👩‍💼</span>
           </button>
         </div>
 
@@ -673,7 +673,7 @@ const App: React.FC = () => {
           <p className={`text-xs ${
             isDarkMode ? 'text-gray-400' : 'text-gray-500'
           }`}>
-            המכשיר יזוכר עבור השימושים הבאים
+            Device will remember this choice for future use
           </p>
           <p className={`text-xs mt-1 font-mono ${
             isDarkMode ? 'text-gray-500' : 'text-gray-400'
@@ -696,7 +696,7 @@ const App: React.FC = () => {
             ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
             : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
         }}
-        dir='rtl'
+        dir='ltr'
       >
         <UserSelectionScreen />
       </div>
@@ -714,11 +714,11 @@ const App: React.FC = () => {
             ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
             : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
         }}
-        dir='rtl'
+        dir='ltr'
       >
         <div className='text-center'>
           <div className='w-16 h-16 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-4'></div>
-          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>מזהה מכשיר...</p>
+          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Identifying device...</p>
         </div>
       </div>
     );
@@ -734,7 +734,7 @@ const App: React.FC = () => {
           ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
           : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
       }}
-      dir='rtl'
+      dir='ltr'
     >
       {/* Bottom Section with Scan Buttons */}
       <div className='fixed bottom-0 left-0 right-0 z-40'>
@@ -748,7 +748,7 @@ const App: React.FC = () => {
                   : 'text-gray-500 bg-white/70 border border-white/30'
               } backdrop-blur-sm`}>
                 <TrendingUp className='w-3 h-3 inline mr-1' />
-                סריקה אחרונה: {lastScanTime}
+                Last scan: {lastScanTime}
               </div>
             </div>
           )}
@@ -780,7 +780,7 @@ const App: React.FC = () => {
                     )}
                   </div>
                   <div className='text-base font-bold'>
-                    {isScanning ? "סורק..." : "10bis"}
+                    {isScanning ? "Scanning..." : "10bis"}
                   </div>
                 </button>
 
@@ -800,7 +800,7 @@ const App: React.FC = () => {
                     )}
                   </div>
                   <div className='text-base font-bold'>
-                    {isScanning ? "סורק..." : "Cibus"}
+                    {isScanning ? "Scanning..." : "Cibus"}
                   </div>
                 </button>
               </div>
@@ -858,8 +858,8 @@ const App: React.FC = () => {
             </div>
             
             <div className='space-y-3'>
-              <h3 className='text-xl font-bold text-gray-800'>סורק שוברים...</h3>
-              <p className='text-gray-600'>מחבר לשרת ומעדכן נתונים</p>
+              <h3 className='text-xl font-bold text-gray-800'>Scanning vouchers...</h3>
+              <p className='text-gray-600'>Connecting to server and updating data</p>
               
               {/* Progress indicators */}
               <div className='flex justify-center space-x-2 mt-4'>
@@ -899,8 +899,8 @@ const App: React.FC = () => {
             </div>
             
             <div className='space-y-3'>
-              <h3 className='text-2xl font-bold text-gray-800'>כל הכבוד! 🎉</h3>
-              <p className='text-green-600 font-semibold'>הפעולה בוצעה בהצלחה</p>
+              <h3 className='text-2xl font-bold text-gray-800'>Well done! 🎉</h3>
+              <p className='text-green-600 font-semibold'>Operation completed successfully</p>
             </div>
           </div>
         </div>
