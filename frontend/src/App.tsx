@@ -3,7 +3,6 @@ import {
   Camera,
   Scan,
   Wallet,
-  RefreshCw,
   CheckCircle,
   XCircle,
   TrendingUp,
@@ -214,7 +213,15 @@ const App: React.FC = () => {
         if (data.data.added_count > 0) {
           hapticFeedback('heavy');
           setShowSuccessAnimation(true);
-          setError(`🎉 נוספו ${data.data.added_count} שוברים חדשים!`);
+          
+          // Show detailed info about new vouchers
+          const voucherDetails = data.data.vouchers || {};
+          const detailsText = Object.entries(voucherDetails)
+            .filter(([_, count]) => (count as number) > 0)
+            .map(([amount, count]) => `${count}x ${amount}₪`)
+            .join(', ');
+          
+          setError(`🎉 נוספו ${data.data.added_count} שוברים חדשים!${detailsText ? `\n${detailsText}` : ''}`);
           await loadVouchers(); // Reload vouchers
           setTimeout(() => setShowSuccessAnimation(false), 2000);
         } else {
@@ -356,35 +363,28 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Enhanced Barcode Section */}
-        <div className='bg-gradient-to-br from-gray-50 to-gray-100 backdrop-blur-sm rounded-3xl p-8 mb-8 border-2 border-gray-200/50 shadow-inner'>
-          <div className='text-center mb-6'>
-            <div className='text-sm font-bold text-gray-600 mb-2 uppercase tracking-wider'>קוד השובר</div>
-            <div className='font-mono text-2xl text-gray-800 tracking-wider bg-white/70 rounded-xl p-3 border border-gray-200'>
-              {barcode}
-            </div>
-          </div>
-
-          {/* Enhanced Barcode Image */}
-          <div className='bg-white rounded-2xl p-8 shadow-lg border-2 border-gray-100'>
+        {/* Large Barcode Display */}
+        <div className='bg-white rounded-3xl p-6 mb-8 border-2 border-gray-100 shadow-xl'>
+          {/* Large Barcode Image */}
+          <div className='bg-white rounded-2xl p-4 shadow-inner border border-gray-50'>
             <img
               src={`${API_BASE.replace("/api", "")}/api/barcode/${barcode}`}
               alt='Barcode'
-              className='w-full h-auto max-h-40 object-contain'
-              style={{ minHeight: "100px" }}
+              className='w-full h-auto object-contain'
+              style={{ minHeight: "180px", maxHeight: "250px" }}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
                 const fallback = e.currentTarget.nextElementSibling as HTMLElement;
                 if (fallback) fallback.style.display = "block";
               }}
             />
-            <div className='hidden font-mono text-lg tracking-widest text-gray-800 text-center py-6 bg-gradient-to-r from-gray-800 to-black text-white rounded-xl'>
+            <div className='hidden font-mono text-2xl tracking-widest text-gray-800 text-center py-12 bg-gradient-to-r from-gray-800 to-black text-white rounded-xl'>
               ||||&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;||||&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;||||&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;||||&nbsp;&nbsp;&nbsp;||
             </div>
           </div>
           
-          <div className='text-center mt-4 text-sm text-gray-500'>
-            הצג את הברקוד לצורך תשלום
+          <div className='text-center mt-4 text-base text-gray-700 font-medium'>
+            🛒 הצג את הברקוד לצורך תשלום
           </div>
         </div>
 
@@ -534,7 +534,7 @@ const App: React.FC = () => {
       }}
       dir='rtl'
     >
-      {/* Bottom Section with Refresh and Scan Buttons */}
+      {/* Bottom Section with Scan Buttons */}
       <div className='fixed bottom-0 left-0 right-0 z-40'>
         <div className='max-w-md mx-auto'>
           {/* Scan Last Time Info */}
@@ -559,44 +559,25 @@ const App: React.FC = () => {
                 : 'bg-white/95 border-white/50'
             }`}
           >
-            <div className='px-6 pt-4 pb-6'>
-              {/* Refresh Button */}
-              <div className='flex justify-center mb-4'>
-                <button
-                  onClick={() => {
-                    hapticFeedback('light');
-                    loadVouchers();
-                  }}
-                  className={`backdrop-blur-sm p-3 rounded-full shadow-lg border hover:scale-105 transition-all duration-200 ${
-                    isDarkMode 
-                      ? 'bg-gray-800/80 border-gray-700/50 hover:bg-gray-700/80'
-                      : 'bg-white/80 border-white/50 hover:bg-white/90'
-                  }`}
-                >
-                  <RefreshCw size={18} className={`${loading ? 'animate-spin' : ''} ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`} />
-                </button>
-              </div>
-
+            <div className='px-6 py-6'>
               {/* Scan Buttons */}
-              <div className='grid grid-cols-2 gap-3'>
+              <div className='grid grid-cols-2 gap-4'>
                 <button
                   onClick={() => {
                     hapticFeedback('medium');
                     handleScan("10bis");
                   }}
                   disabled={isScanning}
-                  className='bg-gradient-to-br from-orange-500 to-red-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95 disabled:opacity-50'
+                  className='bg-gradient-to-br from-orange-500 to-red-600 text-white p-5 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95 disabled:opacity-50'
                 >
                   <div className='bg-white/20 p-2 rounded-xl'>
                     {isScanning ? (
-                      <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                      <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
                     ) : (
-                      <Scan size={18} />
+                      <Scan size={20} />
                     )}
                   </div>
-                  <div className='text-sm font-bold'>
+                  <div className='text-base font-bold'>
                     {isScanning ? "סורק..." : "10bis"}
                   </div>
                 </button>
@@ -607,16 +588,16 @@ const App: React.FC = () => {
                     handleScan("cibus");
                   }}
                   disabled={isScanning}
-                  className='bg-gradient-to-br from-green-500 to-emerald-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95 disabled:opacity-50'
+                  className='bg-gradient-to-br from-green-500 to-emerald-600 text-white p-5 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95 disabled:opacity-50'
                 >
                   <div className='bg-white/20 p-2 rounded-xl'>
                     {isScanning ? (
-                      <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                      <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
                     ) : (
-                      <Camera size={18} />
+                      <Camera size={20} />
                     )}
                   </div>
-                  <div className='text-sm font-bold'>
+                  <div className='text-base font-bold'>
                     {isScanning ? "סורק..." : "Cibus"}
                   </div>
                 </button>
