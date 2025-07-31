@@ -246,11 +246,11 @@ const App: React.FC = () => {
     onClick,
   }) => (
     <div
-      className={`relative overflow-hidden rounded-3xl p-5 transition-all duration-300 transform ${
+      className={`relative overflow-hidden rounded-2xl p-4 transition-all duration-300 transform ${
         count > 0
           ? isDarkMode
-            ? "bg-gray-800/95 backdrop-blur-xl border border-gray-700/40 shadow-2xl cursor-pointer hover:scale-[1.02] hover:shadow-3xl active:scale-95"
-            : "bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl cursor-pointer hover:scale-[1.02] hover:shadow-3xl active:scale-95"
+            ? "bg-gray-800/95 backdrop-blur-xl border border-gray-700/40 shadow-lg cursor-pointer hover:scale-[1.02] active:scale-95"
+            : "bg-white/95 backdrop-blur-xl border border-white/40 shadow-lg cursor-pointer hover:scale-[1.02] active:scale-95"
           : isDarkMode
             ? "bg-gray-900/50 backdrop-blur-xl border border-gray-800/30 opacity-50"
             : "bg-gray-100/50 backdrop-blur-xl border border-gray-200/30 opacity-50"
@@ -267,33 +267,28 @@ const App: React.FC = () => {
         transform: touchFeedback === amount ? 'scale(0.95)' : 'scale(1)',
         boxShadow: count > 0 ? 
           isDarkMode 
-            ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset'
-            : '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.3) inset'
+            ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
+            : '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2) inset'
           : undefined
       }}
     >
-      {/* Enhanced glassmorphism with shimmer */}
-      <div className={`absolute inset-0 bg-gradient-to-br opacity-80 ${
+      {/* Enhanced glassmorphism */}
+      <div className={`absolute inset-0 bg-gradient-to-br opacity-60 ${
         isDarkMode 
-          ? 'from-white/10 via-white/5 to-transparent'
-          : 'from-white/40 via-white/10 to-transparent'
+          ? 'from-white/5 via-white/2 to-transparent'
+          : 'from-white/30 via-white/10 to-transparent'
       }`}></div>
-      {count > 0 && (
-        <div className={`absolute inset-0 bg-gradient-to-r from-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 animate-shimmer ${
-          isDarkMode ? 'via-white/10' : 'via-white/20'
-        }`}></div>
-      )}
 
       <div className='relative z-10 text-center'>
-        <div className='flex items-center justify-center mb-3'>
-          <Gift className='w-5 h-5 text-blue-500 mr-2' />
-          <div className={`text-2xl font-light ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>₪{amount}</div>
+        <div className='flex items-center justify-center mb-2'>
+          <Gift className='w-4 h-4 text-blue-500 mr-1' />
+          <div className={`text-xl font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>₪{amount}</div>
         </div>
-        <div className={`text-xs font-medium mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>שובר דיגיטלי</div>
+        <div className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>שובר דיגיטלי</div>
         <div
-          className={`text-sm font-bold px-3 py-2 rounded-full transition-all duration-300 ${
+          className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-300 ${
             count > 0
-              ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+              ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md"
               : isDarkMode
                 ? "bg-gray-800 text-gray-500"
                 : "bg-gray-100 text-gray-400"
@@ -312,7 +307,7 @@ const App: React.FC = () => {
 
       {/* Availability indicator */}
       {count > 0 && (
-        <div className='absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full shadow-lg animate-pulse'></div>
+        <div className='absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full shadow-sm animate-pulse'></div>
       )}
     </div>
   );
@@ -442,11 +437,11 @@ const App: React.FC = () => {
   );
 
   const HomeView: React.FC = () => (
-    <div className='h-full flex flex-col'>
+    <div className='flex flex-col h-full'>
       {/* Error Display */}
       {error && (
         <div
-          className={`p-3 rounded-2xl text-white text-center font-medium mb-4 ${
+          className={`p-3 rounded-2xl text-white text-center font-medium mb-3 ${
             error.startsWith("✅")
               ? "bg-green-500/90"
               : error.startsWith("ℹ️")
@@ -460,33 +455,33 @@ const App: React.FC = () => {
 
       {/* Compact Header */}
       <div
-        className='relative overflow-hidden rounded-3xl p-4 text-white mb-6'
+        className='relative overflow-hidden rounded-2xl p-4 text-white mb-4'
         style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-          boxShadow: "0 15px 30px -8px rgba(102, 126, 234, 0.4)",
+          boxShadow: "0 10px 25px -5px rgba(102, 126, 234, 0.3)",
         }}
       >
         <div className='relative z-10'>
-          <div className='flex items-center justify-between mb-3'>
+          <div className='flex items-center justify-between mb-2'>
             <div>
-              <h1 className='text-xl font-bold'>BotFersal</h1>
+              <h1 className='text-lg font-bold'>BotFersal</h1>
               <p className='text-white/90 text-sm'>שלום {user}! 👋</p>
             </div>
             <div className='bg-white/20 backdrop-blur-sm rounded-xl p-2'>
-              <Wallet className='w-5 h-5 text-white' />
+              <Wallet className='w-4 h-4 text-white' />
             </div>
           </div>
           
           <div className='bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20'>
             <div className='flex items-center justify-between'>
               <div>
-                <div className='text-lg font-bold'>
+                <div className='text-base font-bold'>
                   ₪{totalValue.toLocaleString()}
                 </div>
                 <div className='text-white/90 text-xs'>סה״כ שווי</div>
               </div>
               <div className='text-right'>
-                <div className='text-lg font-bold text-white/90'>
+                <div className='text-base font-bold text-white/90'>
                   {Object.values(vouchers).reduce((sum, count) => sum + count, 0)}
                 </div>
                 <div className='text-white/70 text-xs'>שוברים</div>
@@ -497,20 +492,20 @@ const App: React.FC = () => {
       </div>
 
       {/* Vouchers Grid */}
-      <div className='flex-1'>
-        <h2 className={`text-lg font-medium mb-4 flex items-center gap-2 ${
+      <div className='flex-1 overflow-y-auto'>
+        <h2 className={`text-base font-medium mb-3 flex items-center gap-2 ${
           isDarkMode ? 'text-white' : 'text-gray-800'
         }`}>
-          <Gift size={20} className='text-blue-600' />
+          <Gift size={18} className='text-blue-600' />
           השוברים שלי
         </h2>
         {loading ? (
           <div className='text-center py-8'>
-            <div className='w-12 h-12 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-4'></div>
-            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-500'}>טוען שוברים...</p>
+            <div className='w-10 h-10 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-3'></div>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>טוען שוברים...</p>
           </div>
         ) : (
-          <div className='grid grid-cols-2 gap-3'>
+          <div className='grid grid-cols-2 gap-3 pb-4'>
             {Object.entries(vouchers).map(([amount, count]) => (
               <VoucherCard
                 key={amount}
@@ -539,98 +534,109 @@ const App: React.FC = () => {
       }}
       dir='rtl'
     >
-      {/* Scan Buttons - Fixed Position */}
-      <div className='fixed bottom-6 left-0 right-0 z-40'>
-        <div className='max-w-md mx-auto px-6'>
-          <div className='grid grid-cols-2 gap-3 mb-4'>
-            <button
-              onClick={() => {
-                hapticFeedback('medium');
-                handleScan("10bis");
-              }}
-              disabled={isScanning}
-              className='bg-gradient-to-br from-orange-500 to-red-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
-            >
-              <div className='bg-white/20 p-2 rounded-xl'>
-                {isScanning ? (
-                  <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-                ) : (
-                  <Scan size={20} />
-                )}
-              </div>
-              <div className='text-center'>
-                <div className='text-sm font-bold'>
-                  {isScanning ? "סורק..." : "10bis"}
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => {
-                hapticFeedback('medium');
-                handleScan("cibus");
-              }}
-              disabled={isScanning}
-              className='bg-gradient-to-br from-green-500 to-emerald-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50'
-            >
-              <div className='bg-white/20 p-2 rounded-xl'>
-                {isScanning ? (
-                  <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-                ) : (
-                  <Camera size={20} />
-                )}
-              </div>
-              <div className='text-center'>
-                <div className='text-sm font-bold'>
-                  {isScanning ? "סורק..." : "Cibus"}
-                </div>
-              </div>
-            </button>
-          </div>
-          
+      {/* Bottom Section with Refresh and Scan Buttons */}
+      <div className='fixed bottom-0 left-0 right-0 z-40'>
+        <div className='max-w-md mx-auto'>
+          {/* Scan Last Time Info */}
           {lastScanTime && (
-            <div className={`text-center text-xs p-2 rounded-xl mb-2 ${
-              isDarkMode 
-                ? 'text-gray-300 bg-gray-800/50 border border-gray-700/30' 
-                : 'text-gray-500 bg-white/50 border border-white/30'
-            } backdrop-blur-sm`}>
-              <TrendingUp className='w-3 h-3 inline mr-1' />
-              סריקה אחרונה: {lastScanTime}
+            <div className='px-6 pb-2'>
+              <div className={`text-center text-xs p-2 rounded-xl ${
+                isDarkMode 
+                  ? 'text-gray-300 bg-gray-800/70 border border-gray-700/30' 
+                  : 'text-gray-500 bg-white/70 border border-white/30'
+              } backdrop-blur-sm`}>
+                <TrendingUp className='w-3 h-3 inline mr-1' />
+                סריקה אחרונה: {lastScanTime}
+              </div>
             </div>
           )}
-          
-          {/* Home indicator */}
-          <div className='flex justify-center'>
-            <div className={`w-32 h-1 rounded-full ${
-              isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
-            }`}></div>
+
+          {/* Background with blur */}
+          <div
+            className={`backdrop-blur-xl border-t shadow-2xl ${
+              isDarkMode 
+                ? 'bg-gray-900/95 border-gray-700/50'
+                : 'bg-white/95 border-white/50'
+            }`}
+          >
+            <div className='px-6 pt-4 pb-6'>
+              {/* Refresh Button */}
+              <div className='flex justify-center mb-4'>
+                <button
+                  onClick={() => {
+                    hapticFeedback('light');
+                    loadVouchers();
+                  }}
+                  className={`backdrop-blur-sm p-3 rounded-full shadow-lg border hover:scale-105 transition-all duration-200 ${
+                    isDarkMode 
+                      ? 'bg-gray-800/80 border-gray-700/50 hover:bg-gray-700/80'
+                      : 'bg-white/80 border-white/50 hover:bg-white/90'
+                  }`}
+                >
+                  <RefreshCw size={18} className={`${loading ? 'animate-spin' : ''} ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`} />
+                </button>
+              </div>
+
+              {/* Scan Buttons */}
+              <div className='grid grid-cols-2 gap-3'>
+                <button
+                  onClick={() => {
+                    hapticFeedback('medium');
+                    handleScan("10bis");
+                  }}
+                  disabled={isScanning}
+                  className='bg-gradient-to-br from-orange-500 to-red-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95 disabled:opacity-50'
+                >
+                  <div className='bg-white/20 p-2 rounded-xl'>
+                    {isScanning ? (
+                      <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                    ) : (
+                      <Scan size={18} />
+                    )}
+                  </div>
+                  <div className='text-sm font-bold'>
+                    {isScanning ? "סורק..." : "10bis"}
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    hapticFeedback('medium');
+                    handleScan("cibus");
+                  }}
+                  disabled={isScanning}
+                  className='bg-gradient-to-br from-green-500 to-emerald-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95 disabled:opacity-50'
+                >
+                  <div className='bg-white/20 p-2 rounded-xl'>
+                    {isScanning ? (
+                      <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                    ) : (
+                      <Camera size={18} />
+                    )}
+                  </div>
+                  <div className='text-sm font-bold'>
+                    {isScanning ? "סורק..." : "Cibus"}
+                  </div>
+                </button>
+              </div>
+            </div>
+            
+            {/* Home indicator */}
+            <div className='flex justify-center pb-2'>
+              <div className={`w-32 h-1 rounded-full ${
+                isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
+              }`}></div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className='max-w-md mx-auto p-6 pb-40 h-screen flex flex-col'>
-        <div className='flex-1 overflow-hidden'>
+      <div className='max-w-md mx-auto h-screen flex flex-col'>
+        <div className='flex-1 px-6 pt-6 pb-4 overflow-hidden'>
           <HomeView />
-        </div>
-        
-        {/* Small refresh button */}
-        <div className='flex justify-center pb-6'>
-          <button
-            onClick={() => {
-              hapticFeedback('light');
-              loadVouchers();
-            }}
-            className={`backdrop-blur-sm p-3 rounded-full shadow-lg border hover:scale-105 transition-all duration-200 ${
-              isDarkMode 
-                ? 'bg-gray-800/80 border-gray-700/30 hover:bg-gray-700/80'
-                : 'bg-white/80 border-white/30 hover:bg-white/90'
-            }`}
-          >
-            <RefreshCw size={18} className={`${loading ? 'animate-spin' : ''} ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-            }`} />
-          </button>
         </div>
       </div>
 
