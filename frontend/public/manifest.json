@@ -12,25 +12,19 @@
   "scope": "/",
   "icons": [
     {
-      "src": "/icon.svg?v=3",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-192.png?v=3",
+      "src": "/icon-192.png?v=4",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png?v=3",
+      "src": "/icon-512.png?v=4",
       "sizes": "512x512", 
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/apple-touch-icon.png?v=3",
+      "src": "/apple-touch-icon.png?v=4",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
@@ -40,12 +34,12 @@
     {
       "name": "Scan Vouchers",
       "url": "/?action=scan",
-      "icons": [{ "src": "/icon-192.png?v=2", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.png?v=4", "sizes": "192x192" }]
     },
     {
       "name": "My Vouchers",
       "url": "/?action=vouchers", 
-      "icons": [{ "src": "/icon-192.png?v=2", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.png?v=4", "sizes": "192x192" }]
     }
   ],
   "categories": ["finance", "productivity", "utilities"],
