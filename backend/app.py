@@ -492,9 +492,50 @@ async def serve_app():
         </html>
         """)
 
-# Catch-all for React routing
+# PWA and static file routes (must be before catch-all)
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve favicon"""
+    if os.path.exists("build/favicon.ico"):
+        return FileResponse("build/favicon.ico", media_type="image/x-icon")
+    raise HTTPException(status_code=404, detail="Favicon not found")
 
+@app.get("/icon-192.png")
+async def icon_192():
+    """Serve 192x192 PWA icon"""
+    if os.path.exists("build/icon-192.png"):
+        return FileResponse("build/icon-192.png", media_type="image/png")
+    raise HTTPException(status_code=404, detail="Icon not found")
 
+@app.get("/icon-512.png")
+async def icon_512():
+    """Serve 512x512 PWA icon"""
+    if os.path.exists("build/icon-512.png"):
+        return FileResponse("build/icon-512.png", media_type="image/png")
+    raise HTTPException(status_code=404, detail="Icon not found")
+
+@app.get("/apple-touch-icon.png")
+async def apple_touch_icon():
+    """Serve Apple touch icon"""
+    if os.path.exists("build/apple-touch-icon.png"):
+        return FileResponse("build/apple-touch-icon.png", media_type="image/png")
+    raise HTTPException(status_code=404, detail="Apple touch icon not found")
+
+@app.get("/manifest.json")
+async def manifest():
+    """Serve PWA manifest"""
+    if os.path.exists("build/manifest.json"):
+        return FileResponse("build/manifest.json", media_type="application/json")
+    raise HTTPException(status_code=404, detail="Manifest not found")
+
+@app.get("/robots.txt")
+async def robots():
+    """Serve robots.txt"""
+    if os.path.exists("build/robots.txt"):
+        return FileResponse("build/robots.txt", media_type="text/plain")
+    raise HTTPException(status_code=404, detail="Robots.txt not found")
+
+# Catch-all for React routing (must be last)
 @app.get("/{path:path}")
 async def serve_spa(path: str):
     """Serve React app for all routes"""
