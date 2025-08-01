@@ -1,0 +1,27 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#f8fafc"/>
+  
+  <!-- Orange/Red card peeking out -->
+  <path d="M160 60 C180 60, 400 60, 420 60 C450 60, 480 90, 480 120 L480 160 C480 180, 460 200, 440 200 L180 200 C160 200, 140 180, 140 160 L140 80 C140 70, 150 60, 160 60 Z" fill="#FF5722"/>
+  
+  <!-- Main green wallet -->
+  <rect x="80" y="140" width="320" height="280" rx="32" fill="#4CAF50"/>
+  
+  <!-- Wallet snap/button area -->
+  <rect x="320" y="220" width="80" height="120" rx="16" fill="#388E3C"/>
+  
+  <!-- White snap button circle -->
+  <circle cx="360" cy="280" r="20" fill="white"/>
+  
+  <!-- Inner shadow for depth -->
+  <rect x="80" y="140" width="320" height="280" rx="32" fill="url(#walletGradient)" opacity="0.8"/>
+  
+  <!-- Gradient definitions -->
+  <defs>
+    <linearGradient id="walletGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#66BB6A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

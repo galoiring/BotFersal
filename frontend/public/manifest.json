@@ -1,14 +1,22 @@
 {
-  "name": "BotFersal - ניהול שוברים",
+  "name": "BotFersal - Voucher Manager",
   "short_name": "BotFersal",
-  "description": "אפליקציה לניהול שוברי 10bis ו-Cibus",
+  "description": "Manage your 10bis and Cibus vouchers with ease",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f7fa",
-  "theme_color": "#667eea",
-  "lang": "he",
-  "dir": "rtl",
+  "theme_color": "#4CAF50",
+  "lang": "en",
+  "dir": "ltr",
+  "orientation": "portrait-primary",
+  "scope": "/",
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
@@ -20,13 +28,39 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
   "shortcuts": [
     {
-      "name": "סריקת שוברים",
+      "name": "Scan Vouchers",
       "url": "/?action=scan",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Vouchers",
+      "url": "/?action=vouchers", 
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["finance", "productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-narrow.png", 
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ]
 }
