@@ -419,110 +419,111 @@ const App: React.FC = () => {
     onCancel,
   }) => (
     <div
-      className='fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-scale-up'
-      style={{ backdropFilter: "blur(25px)" }}
+      className='fixed inset-0 bg-gray-100 flex flex-col z-50'
       onClick={(e) => e.target === e.currentTarget && onCancel()}
     >
-      <div
-        className='bg-white/98 backdrop-blur-2xl rounded-3xl p-8 w-full max-w-lg border-2 border-white/50 shadow-3xl transform transition-all duration-500 animate-scale-up'
-        style={{
-          boxShadow: "0 50px 100px -20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
-          background: "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%)",
-        }}
-      >
+      {/* Status bar area - iOS style */}
+      <div className='h-12 bg-green-500 w-full'></div>
+      
+      <div className='flex-1 bg-gray-100 flex flex-col'>
         {/* Header with close button */}
-        <div className='flex justify-between items-center mb-6'>
+        <div className='flex items-center justify-between p-4 bg-white border-b border-gray-200'>
           <div className='flex items-center gap-3'>
-            <div className='bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-xl'>
+            <div className='bg-blue-500 p-2 rounded-lg'>
               <Gift className='w-6 h-6 text-white' />
             </div>
-            <h3 className='text-2xl font-bold text-gray-800'>
+            <h3 className='text-xl font-semibold text-gray-900'>
               Digital Voucher
             </h3>
           </div>
           <button
             onClick={onCancel}
-            className='p-2 hover:bg-gray-100 rounded-xl transition-colors duration-200'
+            className='w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center'
           >
-            <XCircle className='w-6 h-6 text-gray-400' />
+            <XCircle className='w-5 h-5 text-gray-600' />
           </button>
         </div>
 
-        {/* Amount Display */}
-        <div className='text-center mb-8'>
-          <div className='bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl p-4 mb-6'>
-            <div className='text-4xl font-bold mb-2'>₪{amount}</div>
-            <div className='text-blue-100 font-medium'>Voucher Value</div>
-          </div>
-        </div>
+        {/* Content */}
+        <div className='flex-1 p-6'>
 
-        {/* Large Barcode Display */}
-        <div className='bg-white rounded-3xl p-6 mb-8 border-2 border-gray-100 shadow-xl'>
-          {/* Large Barcode Image */}
-          <div className='bg-white rounded-2xl p-4 shadow-inner border border-gray-50'>
-            <img
-              src={`${API_BASE.replace("/api", "")}/api/barcode/${barcode}`}
-              alt='Barcode'
-              className='w-full h-auto object-contain'
-              style={{ minHeight: "180px", maxHeight: "250px" }}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = "block";
-              }}
-            />
-            <div className='hidden font-mono text-2xl tracking-widest text-gray-800 text-center py-12 bg-gradient-to-r from-gray-800 to-black text-white rounded-xl'>
-              ||||&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;||||&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;||||&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;||||&nbsp;&nbsp;&nbsp;||
+          {/* Amount Display */}
+          <div className='text-center mb-8'>
+            <div className='bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-3xl p-6'>
+              <div className='text-5xl font-bold mb-2'>₪{amount}</div>
+              <div className='text-blue-100 text-lg'>Voucher Value</div>
             </div>
           </div>
-          
-          <div className='text-center mt-4 text-base text-gray-700 font-medium'>
-            🛒 Show barcode for payment
-          </div>
-        </div>
 
-        {/* Enhanced Action Buttons */}
-        <div className='text-center'>
-          <p className='text-gray-700 mb-6 font-bold text-xl'>
-            Did you use the voucher? 🍽️
-          </p>
-          <div className='flex gap-4'>
-            <button
-              onClick={() => {
-                hapticFeedback('heavy');
-                onUse();
-              }}
-              className='flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-5 px-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-2xl'
-              style={{
-                boxShadow: "0 20px 40px -12px rgba(34, 197, 94, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-              }}
-            >
-              <CheckCircle size={28} />
-              <div>
-                <div className='text-lg'>Yes, I used it!</div>
-                <div className='text-xs opacity-90'>Mark as used</div>
+          {/* Large Barcode Display */}
+          <div className='bg-white rounded-3xl p-8 mb-8 shadow-sm'>
+            <div className='bg-white p-6'>
+              <img
+                src={`${API_BASE.replace("/api", "")}/api/barcode/${barcode}`}
+                alt='Barcode'
+                className='w-full h-auto object-contain mx-auto'
+                style={{ minHeight: "120px", maxHeight: "200px" }}
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = "block";
+                }}
+              />
+              <div className='hidden font-mono text-xl tracking-widest text-black text-center py-8 bg-white'>
+                ||||&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;||||&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;||||&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;||||&nbsp;&nbsp;&nbsp;||
               </div>
-            </button>
-            <button
-              onClick={() => {
-                hapticFeedback('light');
-                onCancel();
-              }}
-              className='flex-1 bg-white/95 backdrop-blur-xl text-gray-700 py-5 px-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 border-2 border-gray-200 shadow-xl'
-              style={{
-                boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.5) inset",
-              }}
-            >
-              <XCircle size={28} />
-              <div>
-                <div className='text-lg'>Not yet</div>
-                <div className='text-xs opacity-70'>Save for later</div>
+              
+              {/* Barcode number */}
+              <div className='text-center mt-4 text-sm font-mono text-gray-700'>
+                {barcode}
               </div>
-            </button>
+            </div>
+            
+            <div className='text-center mt-4 flex items-center justify-center gap-2 text-gray-600'>
+              <div className='w-6 h-6 bg-gray-200 rounded flex items-center justify-center'>
+                🛒
+              </div>
+              <span className='font-medium'>Show barcode for payment</span>
+            </div>
           </div>
-          
-          <div className='mt-4 text-xs text-gray-500 bg-gray-50 rounded-xl p-3'>
-            💡 Tip: You can save the voucher and use it later
+
+          {/* Action Buttons */}
+          <div className='text-center'>
+            <p className='text-gray-700 mb-6 text-lg font-medium'>
+              Did you use the voucher? 🍽️
+            </p>
+            <div className='flex gap-4'>
+              <button
+                onClick={() => {
+                  hapticFeedback('heavy');
+                  onUse();
+                }}
+                className='flex-1 bg-green-500 text-white py-6 px-6 rounded-2xl font-semibold flex flex-col items-center justify-center gap-2 transition-all duration-200 active:scale-95'
+              >
+                <CheckCircle size={24} />
+                <div>
+                  <div className='text-lg'>Yes, I used it!</div>
+                  <div className='text-sm opacity-90'>Mark as used</div>
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  hapticFeedback('light');
+                  onCancel();
+                }}
+                className='flex-1 bg-white text-gray-700 py-6 px-6 rounded-2xl font-semibold flex flex-col items-center justify-center gap-2 transition-all duration-200 active:scale-95 border border-gray-300'
+              >
+                <XCircle size={24} />
+                <div>
+                  <div className='text-lg'>Not yet</div>
+                  <div className='text-sm opacity-70'>Save for later</div>
+                </div>
+              </button>
+            </div>
+            
+            <div className='mt-6 text-sm text-gray-500 bg-yellow-50 rounded-xl p-4 border border-yellow-200'>
+              💡 Tip: You can save the voucher and use it later
+            </div>
           </div>
         </div>
       </div>
