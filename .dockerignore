@@ -30,14 +30,16 @@ temp
 .DS_Store
 Thumbs.db
 
-# Images and media
-*.png
+# Images and media (exclude most but allow PWA icons)
 *.jpg
 *.jpeg
 *.gif
-*.ico
-*.svg
 IMG_*
+# Allow PWA icons
+!frontend/public/icon-192.png
+!frontend/public/icon-512.png
+!frontend/public/apple-touch-icon.png
+!frontend/public/favicon.ico
 
 # Documentation
 README.md
