@@ -585,7 +585,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Vouchers Grid */}
-      <div className='flex-1 overflow-y-auto'>
+      <div className='flex-1 overflow-hidden'>
         <h2 className={`text-base font-medium mb-3 flex items-center gap-2 ${
           isDarkMode ? 'text-white' : 'text-gray-800'
         }`}>

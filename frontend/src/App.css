@@ -1,8 +1,33 @@
 /* src/App.css */
 
-/* Global styles */
+/* Global styles - Disable all scrolling */
 * {
   box-sizing: border-box;
+  /* Prevent any scrolling or movement */
+  overflow-anchor: none;
+}
+
+html {
+  /* Completely lock the page */
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  /* Disable overscroll */
+  overscroll-behavior: none;
+  /* Disable touch actions that cause scrolling */
+  touch-action: manipulation;
+}
+
+/* Disable scrolling on root element */
+#root {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  /* Prevent any touch scrolling */
+  touch-action: manipulation;
+  overscroll-behavior: none;
 }
 
 body {
@@ -13,7 +38,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  /* Completely disable all scrolling */
+  overflow: hidden;
+  /* Prevent touch scrolling on mobile */
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  /* Disable overscroll behavior */
+  overscroll-behavior: none;
+  /* Disable pull-to-refresh */
+  -webkit-overflow-scrolling: none;
+  /* Prevent touch move */
+  touch-action: manipulation;
 }
 
 /* Custom properties for glassmorphism */
@@ -342,32 +378,34 @@ body {
 
 /* Enhanced Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 10px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  margin: 4px;
+  display: none;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(99, 102, 241, 0.6), rgba(139, 92, 246, 0.6));
-  border-radius: 12px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-  transition: all 0.3s ease;
+  display: none;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8));
-  background-clip: content-box;
-  transform: scale(1.1);
+/* Completely disable scrolling on all elements */
+*, *::before, *::after {
+  overscroll-behavior: none !important;
 }
 
-::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(180deg, rgba(99, 102, 241, 1), rgba(139, 92, 246, 1));
-  background-clip: content-box;
+/* Additional scroll prevention */
+body, html {
+  -webkit-overflow-scrolling: auto;
+  overflow-scrolling: auto;
+}
+
+/* Prevent touch events that cause scrolling */
+div, section, article, main {
+  overscroll-behavior: none;
+  touch-action: manipulation;
 }
 
 /* Enhanced Input field styling */
