@@ -10,10 +10,12 @@
     "@types/jest": "^27.5.2",
     "@types/node": "^16.18.126",
     "axios": "^1.10.0",
+    "framer-motion": "^12.23.16",
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-scripts": "5.0.1",
+    "react-swipeable": "^7.0.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

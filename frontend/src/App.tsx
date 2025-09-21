@@ -9,6 +9,10 @@ import {
   Gift,
   Star,
 } from "lucide-react";
+import { SwipeableVoucherCard } from "./components/SwipeableVoucherCard";
+import { PullToRefresh } from "./components/PullToRefresh";
+import { ShareButton } from "./components/ShareButton";
+import { useHapticFeedback } from "./hooks/useHapticFeedback";
 import "./App.css";
 
 // API Configuration
@@ -88,17 +92,8 @@ const App: React.FC = () => {
   const [showUserSelection, setShowUserSelection] = useState<boolean>(false);
   const [deviceId] = useState<string>(() => generateDeviceFingerprint());
 
-  // Haptic feedback (if available)
-  const hapticFeedback = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
-    if ('vibrate' in navigator) {
-      const patterns = {
-        light: [10],
-        medium: [20],
-        heavy: [30]
-      };
-      navigator.vibrate(patterns[type]);
-    }
-  }, []);
+  // Enhanced haptic feedback
+  const { hapticFeedback, patterns } = useHapticFeedback();
 
   // Authentication and device detection
   const authenticateDevice = useCallback(() => {
@@ -221,17 +216,17 @@ const App: React.FC = () => {
       const data = await response.json();
 
       if (data.success) {
-        hapticFeedback('heavy');
+        patterns.voucherGet();
         setBarcodeData(data.data.barcode);
         setSelectedVoucher(amount);
         setShowBarcode(true);
       } else {
-        hapticFeedback('heavy');
+        patterns.noVouchers();
         setError(data.message || `❌ No vouchers available for ${amount}₪`);
         setTimeout(() => setError(""), 4000);
       }
     } catch (err: any) {
-      hapticFeedback('heavy');
+      patterns.connectionError();
       setError("❌ Error getting voucher");
       setTimeout(() => setError(""), 4000);
     } finally {
@@ -243,7 +238,7 @@ const App: React.FC = () => {
     if (!selectedVoucher) return;
 
     try {
-      hapticFeedback('heavy');
+      patterns.voucherUse();
       
       await fetch(`${API_BASE}/vouchers/use`, {
         method: "POST",
@@ -273,14 +268,14 @@ const App: React.FC = () => {
       }, 3000);
       
     } catch (err: any) {
-      hapticFeedback('heavy');
+      patterns.connectionError();
       setError("❌ Error updating voucher");
       setTimeout(() => setError(""), 4000);
     }
   };
 
   const handleVoucherCancel = (): void => {
-    hapticFeedback('light');
+    patterns.buttonTap();
     setShowBarcode(false);
     setSelectedVoucher(null);
   };
@@ -304,7 +299,7 @@ const App: React.FC = () => {
 
       if (data.success) {
         if (data.data.added_count > 0) {
-          hapticFeedback('heavy');
+          patterns.scanComplete();
           setShowSuccessAnimation(true);
           
           // Show detailed info about new vouchers
@@ -318,7 +313,7 @@ const App: React.FC = () => {
           await loadVouchers(); // Reload vouchers
           setTimeout(() => setShowSuccessAnimation(false), 2000);
         } else {
-          hapticFeedback('light');
+          patterns.buttonTap();
           setError("ℹ️ No new vouchers found");
         }
         // Update last scan time
@@ -327,11 +322,11 @@ const App: React.FC = () => {
           minute: '2-digit' 
         }));
       } else {
-        hapticFeedback('heavy');
+        patterns.scanError();
         setError(data.message || "❌ Scanning error");
       }
     } catch (err: any) {
-      hapticFeedback('heavy');
+      patterns.connectionError();
       setError("❌ Server connection error");
     } finally {
       setIsScanning(false);
@@ -340,76 +335,24 @@ const App: React.FC = () => {
     }
   };
 
+  const handleShare = (amount: string) => {
+    // Share voucher info
+    console.log('Sharing voucher:', amount);
+  };
+
   const VoucherCard: React.FC<VoucherCardProps> = ({
     amount,
     count,
     onClick,
   }) => (
-    <div
-      className={`relative overflow-hidden rounded-2xl p-4 transition-all duration-300 transform ${
-        count > 0
-          ? isDarkMode
-            ? "bg-gray-800/95 backdrop-blur-xl border border-gray-700/40 shadow-lg cursor-pointer hover:scale-[1.02] active:scale-95"
-            : "bg-white/95 backdrop-blur-xl border border-white/40 shadow-lg cursor-pointer hover:scale-[1.02] active:scale-95"
-          : isDarkMode
-            ? "bg-gray-900/50 backdrop-blur-xl border border-gray-800/30 opacity-50"
-            : "bg-gray-100/50 backdrop-blur-xl border border-gray-200/30 opacity-50"
-      }`}
-      onClick={() => {
-        if (count > 0) {
-          hapticFeedback('medium');
-          setTouchFeedback(amount);
-          setTimeout(() => setTouchFeedback(''), 200);
-          onClick(amount);
-        }
-      }}
-      style={{
-        transform: touchFeedback === amount ? 'scale(0.95)' : 'scale(1)',
-        boxShadow: count > 0 ? 
-          isDarkMode 
-            ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
-            : '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2) inset'
-          : undefined
-      }}
-    >
-      {/* Enhanced glassmorphism */}
-      <div className={`absolute inset-0 bg-gradient-to-br opacity-60 ${
-        isDarkMode 
-          ? 'from-white/5 via-white/2 to-transparent'
-          : 'from-white/30 via-white/10 to-transparent'
-      }`}></div>
-
-      <div className='relative z-10 text-center'>
-        <div className='flex items-center justify-center mb-2'>
-          <Gift className='w-4 h-4 text-blue-500 mr-1' />
-          <div className={`text-xl font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>₪{amount}</div>
-        </div>
-        <div className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Digital Voucher</div>
-        <div
-          className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-300 ${
-            count > 0
-              ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md"
-              : isDarkMode
-                ? "bg-gray-800 text-gray-500"
-                : "bg-gray-100 text-gray-400"
-          }`}
-        >
-          {count > 0 ? (
-            <div className='flex items-center justify-center gap-1'>
-              <Star className='w-3 h-3' />
-              {count} Available
-            </div>
-          ) : (
-            "Sold Out"
-          )}
-        </div>
-      </div>
-
-      {/* Availability indicator */}
-      {count > 0 && (
-        <div className='absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full shadow-sm animate-pulse'></div>
-      )}
-    </div>
+    <SwipeableVoucherCard
+      amount={amount}
+      count={count}
+      onClick={onClick}
+      onShare={handleShare}
+      isDarkMode={isDarkMode}
+      hapticFeedback={hapticFeedback}
+    />
   );
 
   const BarcodeDisplay: React.FC<BarcodeDisplayProps> = ({
@@ -479,11 +422,21 @@ const App: React.FC = () => {
               </div>
             </div>
             
-            <div className='text-center mt-4 flex items-center justify-center gap-2 text-gray-600'>
-              <div className='w-6 h-6 bg-gray-200 rounded flex items-center justify-center'>
-                🛒
+            <div className='text-center mt-4'>
+              <div className='flex items-center justify-center gap-2 text-gray-600 mb-3'>
+                <div className='w-6 h-6 bg-gray-200 rounded flex items-center justify-center'>
+                  🛒
+                </div>
+                <span className='font-medium'>Show barcode for payment</span>
               </div>
-              <span className='font-medium'>Show barcode for payment</span>
+
+              <ShareButton
+                title="BotFersal Voucher"
+                text="Check out this digital voucher!"
+                voucherData={{ amount, barcode }}
+                hapticFeedback={patterns.buttonTap}
+                className="text-sm"
+              />
             </div>
           </div>
 
@@ -495,7 +448,7 @@ const App: React.FC = () => {
             <div className='flex gap-4'>
               <button
                 onClick={() => {
-                  hapticFeedback('heavy');
+                  patterns.voucherUse();
                   onUse();
                 }}
                 className='flex-1 bg-green-500 text-white py-6 px-6 rounded-2xl font-semibold flex flex-col items-center justify-center gap-2 transition-all duration-200 active:scale-95'
@@ -508,7 +461,7 @@ const App: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  hapticFeedback('light');
+                  patterns.buttonTap();
                   onCancel();
                 }}
                 className='flex-1 bg-white text-gray-700 py-6 px-6 rounded-2xl font-semibold flex flex-col items-center justify-center gap-2 transition-all duration-200 active:scale-95 border border-gray-300'
@@ -599,16 +552,18 @@ const App: React.FC = () => {
             <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Loading vouchers...</p>
           </div>
         ) : (
-          <div className='grid grid-cols-2 gap-3 pb-4'>
-            {Object.entries(vouchers).map(([amount, count]) => (
-              <VoucherCard
-                key={amount}
-                amount={amount}
-                count={count}
-                onClick={handleVoucherClick}
-              />
-            ))}
-          </div>
+          <PullToRefresh onRefresh={loadVouchers}>
+            <div className='grid grid-cols-2 gap-3 pb-4'>
+              {Object.entries(vouchers).map(([amount, count]) => (
+                <VoucherCard
+                  key={amount}
+                  amount={amount}
+                  count={count}
+                  onClick={handleVoucherClick}
+                />
+              ))}
+            </div>
+          </PullToRefresh>
         )}
       </div>
     </div>
@@ -767,7 +722,7 @@ const App: React.FC = () => {
               <div className='grid grid-cols-2 gap-4'>
                 <button
                   onClick={() => {
-                    hapticFeedback('medium');
+                    patterns.buttonTap();
                     handleScan("10bis");
                   }}
                   disabled={isScanning}
@@ -787,7 +742,7 @@ const App: React.FC = () => {
 
                 <button
                   onClick={() => {
-                    hapticFeedback('medium');
+                    patterns.buttonTap();
                     handleScan("cibus");
                   }}
                   disabled={isScanning}
