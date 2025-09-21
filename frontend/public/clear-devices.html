@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Device Registration - BotFersal</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 24px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .device-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-family: monospace;
+        }
+
+        .device-count {
+            font-weight: bold;
+            color: #e74c3c;
+            font-size: 18px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .info {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔧</div>
+        <h1>Device Registration Reset</h1>
+        <p>This tool will clear all registered devices from your browser's local storage, allowing you to register devices again.</p>
+
+        <div class="device-info">
+            <div>Currently registered devices: <span id="deviceCount" class="device-count">0</span></div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                Current device ID: <span id="currentDeviceId"></span>
+            </div>
+        </div>
+
+        <button onclick="clearDevices()">Clear All Registered Devices</button>
+        <button onclick="showDevices()">Show Device Details</button>
+
+        <div id="success" class="success">
+            ✅ All registered devices have been cleared! You can now go back to the app and register your device again.
+        </div>
+
+        <div id="deviceDetails" style="display: none; margin-top: 20px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 10px;">
+            <h3>Device Details:</h3>
+            <div id="deviceList"></div>
+        </div>
+
+        <div class="info">
+            💡 <strong>What this does:</strong> The app stores device registrations in your browser. Sometimes after system updates, your device fingerprint changes and the app thinks you're using a new device. This tool resets the device registration list.
+        </div>
+
+        <a href="/" class="back-btn">← Back to BotFersal</a>
+    </div>
+
+    <script>
+        // Generate device fingerprint (same logic as in App.tsx)
+        function generateDeviceFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillText('Device fingerprint', 2, 2);
+            }
+
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                window.screen.width + 'x' + window.screen.height,
+                window.screen.colorDepth,
+                new Date().getTimezoneOffset(),
+                canvas.toDataURL(),
+                navigator.hardwareConcurrency || 0,
+                navigator.deviceMemory || 0
+            ].join('|');
+
+            // Simple hash function
+            let hash = 0;
+            for (let i = 0; i < fingerprint.length; i++) {
+                const char = fingerprint.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return Math.abs(hash).toString(36);
+        }
+
+        function updateDeviceInfo() {
+            const storedDevices = localStorage.getItem('registeredDevices');
+            const devices = storedDevices ? JSON.parse(storedDevices) : [];
+            const currentDeviceId = generateDeviceFingerprint();
+
+            document.getElementById('deviceCount').textContent = devices.length;
+            document.getElementById('currentDeviceId').textContent = currentDeviceId.substring(0, 12) + '...';
+
+            return { devices, currentDeviceId };
+        }
+
+        function clearDevices() {
+            if (confirm('Are you sure you want to clear all registered devices? This will allow you to register devices again.')) {
+                localStorage.removeItem('registeredDevices');
+                document.getElementById('success').style.display = 'block';
+                document.getElementById('deviceDetails').style.display = 'none';
+                updateDeviceInfo();
+            }
+        }
+
+        function showDevices() {
+            const { devices } = updateDeviceInfo();
+            const deviceList = document.getElementById('deviceList');
+            const deviceDetails = document.getElementById('deviceDetails');
+
+            if (devices.length === 0) {
+                deviceList.innerHTML = '<p>No devices registered.</p>';
+            } else {
+                deviceList.innerHTML = devices.map((device, index) => `
+                    <div style="margin-bottom: 15px; padding: 10px; background: white; border-radius: 5px;">
+                        <strong>Device ${index + 1}:</strong><br>
+                        User: ${device.userName}<br>
+                        Device ID: ${device.deviceId}<br>
+                        Registered: ${new Date(device.registeredAt).toLocaleString()}
+                    </div>
+                `).join('');
+            }
+
+            deviceDetails.style.display = deviceDetails.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Initialize on page load
+        updateDeviceInfo();
+    </script>
+</body>
+</html>
