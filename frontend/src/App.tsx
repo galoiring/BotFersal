@@ -13,6 +13,7 @@ import { SwipeableVoucherCard } from "./components/SwipeableVoucherCard";
 import { PullToRefresh } from "./components/PullToRefresh";
 import { ShareButton } from "./components/ShareButton";
 import { useHapticFeedback } from "./hooks/useHapticFeedback";
+import { GoogleAuth, useGoogleAuth } from "./auth/GoogleAuth";
 import "./App.css";
 
 // API Configuration
@@ -37,42 +38,17 @@ interface BarcodeDisplayProps {
   onCancel: () => void;
 }
 
-// Device fingerprinting function
-const generateDeviceFingerprint = (): string => {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillText('Device fingerprint', 2, 2);
-  }
-  
-  const fingerprint = [
-    navigator.userAgent,
-    navigator.language,
-    window.screen.width + 'x' + window.screen.height,
-    window.screen.colorDepth,
-    new Date().getTimezoneOffset(),
-    canvas.toDataURL(),
-    navigator.hardwareConcurrency || 0,
-    (navigator as any).deviceMemory || 0
-  ].join('|');
-  
-  // Simple hash function
-  let hash = 0;
-  for (let i = 0; i < fingerprint.length; i++) {
-    const char = fingerprint.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return Math.abs(hash).toString(36);
-};
+// User mapping for API compatibility
+const mapGoogleUserToAPIUser = (email: string): string => {
+  // Map specific emails to your API users
+  const emailMap: { [key: string]: string } = {
+    'gal.cibus@gmail.com': 'jewbaca1',
+    // Add Rinat's email here when known
+    // 'rinat.email@gmail.com': 'rinat_user'
+  };
 
-interface DeviceUser {
-  deviceId: string;
-  userName: string;
-  registeredAt: string;
-}
+  return emailMap[email] || 'jewbaca1'; // Default fallback
+};
 
 const App: React.FC = () => {
   const [vouchers, setVouchers] = useState<VoucherCounts>({});
@@ -88,57 +64,36 @@ const App: React.FC = () => {
   const [showSuccessAnimation, setShowSuccessAnimation] = useState<boolean>(false);
   const [touchFeedback, setTouchFeedback] = useState<string>("");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [showUserSelection, setShowUserSelection] = useState<boolean>(false);
-  const [deviceId] = useState<string>(() => generateDeviceFingerprint());
+
+  // Google Authentication
+  const { user: googleUser, isAuthenticated, isLoading: authLoading, signIn, signOut } = useGoogleAuth();
 
   // Enhanced haptic feedback
   const { hapticFeedback, patterns } = useHapticFeedback();
 
-  // Authentication and device detection
-  const authenticateDevice = useCallback(() => {
-    const storedDevices = localStorage.getItem('registeredDevices');
-    const devices: DeviceUser[] = storedDevices ? JSON.parse(storedDevices) : [];
-    
-    // Check if current device is registered
-    const currentDevice = devices.find(d => d.deviceId === deviceId);
-    
-    if (currentDevice) {
-      setUser(currentDevice.userName === 'Gal' ? 'jewbaca1' : 'rinat_user'); // Map to API users
-      setIsAuthenticated(true);
-      console.log(`Authenticated as: ${currentDevice.userName}`);
-    } else {
-      // Device not registered, show user selection
-      setShowUserSelection(true);
-    }
-  }, [deviceId]);
-  
-  const registerDevice = (userName: string) => {
-    const storedDevices = localStorage.getItem('registeredDevices');
-    const devices: DeviceUser[] = storedDevices ? JSON.parse(storedDevices) : [];
-    
-    // Check if we already have 2 devices registered
-    if (devices.length >= 2 && !devices.find(d => d.deviceId === deviceId)) {
-      setError('❌ Maximum 2 devices registered. Please contact admin to remove a device.');
-      return;
-    }
-    
-    const newDevice: DeviceUser = {
-      deviceId,
-      userName,
-      registeredAt: new Date().toISOString()
-    };
-    
-    // Remove existing registration for this device (if any)
-    const filteredDevices = devices.filter(d => d.deviceId !== deviceId);
-    filteredDevices.push(newDevice);
-    
-    localStorage.setItem('registeredDevices', JSON.stringify(filteredDevices));
-    setUser(userName === 'Gal' ? 'jewbaca1' : 'rinat_user');
-    setIsAuthenticated(true);
-    setShowUserSelection(false);
-    setError('');
-  };
+  // Handle Google Sign-In Success
+  const handleGoogleSignIn = useCallback((googleUserData: any) => {
+    const apiUser = mapGoogleUserToAPIUser(googleUserData.email);
+    setUser(apiUser);
+    signIn(googleUserData);
+    patterns.celebration();
+    console.log(`Authenticated as: ${googleUserData.name} (${apiUser})`);
+  }, [signIn, patterns]);
+
+  // Handle Google Sign-In Error
+  const handleGoogleSignInError = useCallback((error: string) => {
+    console.error('Google Sign-In Error:', error);
+    setError(`❌ Authentication failed: ${error}`);
+    patterns.attention();
+    setTimeout(() => setError(''), 5000);
+  }, [patterns]);
+
+  // Handle Sign Out
+  const handleSignOut = useCallback(() => {
+    signOut();
+    setUser('');
+    patterns.buttonTap();
+  }, [signOut, patterns]);
 
   // Load voucher data and detect dark mode on component mount
   useEffect(() => {
@@ -153,13 +108,16 @@ const App: React.FC = () => {
     
     darkModeQuery.addEventListener('change', handleColorSchemeChange);
     
-    // Authenticate device first
-    authenticateDevice();
+    // Set user when Google auth is ready
+    if (isAuthenticated && googleUser) {
+      const apiUser = mapGoogleUserToAPIUser(googleUser.email);
+      setUser(apiUser);
+    }
     
     return () => {
       darkModeQuery.removeEventListener('change', handleColorSchemeChange);
     };
-  }, [authenticateDevice]);
+  }, [isAuthenticated, googleUser]);
   
   // Load vouchers when authenticated
   useEffect(() => {
@@ -512,10 +470,14 @@ const App: React.FC = () => {
           <div className='flex items-center justify-between mb-2'>
             <div>
               <h1 className='text-lg font-bold'>BotFersal</h1>
-              <p className='text-white/90 text-sm'>Hello {user === 'jewbaca1' ? 'Gal' : 'Rinat'}! 👋</p>
+              <p className='text-white/90 text-sm'>Hello {googleUser?.name || (user === 'jewbaca1' ? 'Gal' : 'Rinat')}! 👋</p>
             </div>
-            <div className='bg-white/20 backdrop-blur-sm rounded-xl p-2'>
-              <Wallet className='w-4 h-4 text-white' />
+            <div className='bg-white/20 backdrop-blur-sm rounded-xl p-2 cursor-pointer' onClick={handleSignOut}>
+              {googleUser?.picture ? (
+                <img src={googleUser.picture} alt="Profile" className='w-4 h-4 rounded-full' />
+              ) : (
+                <Wallet className='w-4 h-4 text-white' />
+              )}
             </div>
           </div>
           
@@ -571,12 +533,12 @@ const App: React.FC = () => {
 
 
 
-  // User Selection Screen
-  const UserSelectionScreen: React.FC = () => (
+  // Google Sign-In Screen
+  const SignInScreen: React.FC = () => (
     <div className='flex items-center justify-center min-h-screen p-6'>
       <div
         className={`max-w-sm w-full rounded-3xl p-8 backdrop-blur-xl border shadow-2xl ${
-          isDarkMode 
+          isDarkMode
             ? 'bg-gray-800/95 border-gray-700/50'
             : 'bg-white/95 border-white/50'
         }`}
@@ -591,7 +553,7 @@ const App: React.FC = () => {
           }`}>BotFersal</h1>
           <p className={`text-sm ${
             isDarkMode ? 'text-gray-300' : 'text-gray-600'
-          }`}>Who is using this device?</p>
+          }`}>Sign in to access your vouchers</p>
         </div>
 
         {/* Error Display */}
@@ -601,72 +563,59 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* User Selection Buttons */}
+        {/* Google Sign-In */}
         <div className='space-y-4'>
-          <button
-            onClick={() => registerDevice('Gal')}
-            className='w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95'
-          >
-            <div className='bg-white/20 p-2 rounded-xl'>
-              <Wallet className='w-5 h-5' />
-            </div>
-            <span>Gal 👨‍💼</span>
-          </button>
-          
-          <button
-            onClick={() => registerDevice('Rinat')}
-            className='w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95'
-          >
-            <div className='bg-white/20 p-2 rounded-xl'>
-              <Star className='w-5 h-5' />
-            </div>
-            <span>Rinat 👩‍💼</span>
-          </button>
+          <GoogleAuth
+            onSuccess={handleGoogleSignIn}
+            onError={handleGoogleSignInError}
+          />
         </div>
 
-        {/* Device Info */}
+        {/* Info */}
         <div className='mt-6 text-center'>
           <p className={`text-xs ${
             isDarkMode ? 'text-gray-400' : 'text-gray-500'
           }`}>
-            Device will remember this choice for future use
+            🔒 Secure sign-in with Google
           </p>
-          <p className={`text-xs mt-1 font-mono ${
+          <p className={`text-xs mt-1 ${
             isDarkMode ? 'text-gray-500' : 'text-gray-400'
           }`}>
-            ID: {deviceId.substring(0, 8)}...
+            No more device limits!
           </p>
         </div>
       </div>
     </div>
   );
 
-  if (showUserSelection) {
+  // Show sign-in screen if not authenticated
+  if (!isAuthenticated) {
     return (
       <div
         className={`min-h-screen transition-colors duration-300 ${
           isDarkMode ? 'bg-gray-900' : ''
         }`}
         style={{
-          background: isDarkMode 
+          background: isDarkMode
             ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
             : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
         }}
         dir='ltr'
       >
-        <UserSelectionScreen />
+        <SignInScreen />
       </div>
     );
   }
 
-  if (!isAuthenticated) {
+  // Show loading if auth is still initializing
+  if (authLoading) {
     return (
       <div
         className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
           isDarkMode ? 'bg-gray-900' : ''
         }`}
         style={{
-          background: isDarkMode 
+          background: isDarkMode
             ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
             : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
         }}
@@ -674,7 +623,7 @@ const App: React.FC = () => {
       >
         <div className='text-center'>
           <div className='w-16 h-16 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-4'></div>
-          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Identifying device...</p>
+          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Loading...</p>
         </div>
       </div>
     );
