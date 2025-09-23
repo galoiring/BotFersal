@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 
 // Google OAuth configuration
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
-const GOOGLE_SCOPES = 'email profile';
 
 interface GoogleUser {
   id: string;

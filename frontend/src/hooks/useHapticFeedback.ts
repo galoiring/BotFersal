@@ -54,11 +54,12 @@ export const useHapticFeedback = (options: HapticOptions = {}) => {
       }
     }
 
-    // Android Chrome haptic feedback
-    if ('getGamepads' in navigator && 'vibrationActuator' in (navigator.getGamepads()[0] || {})) {
+    // Android Chrome haptic feedback (future feature)
+    if ('getGamepads' in navigator && fallback) {
       try {
-        const gamepad = navigator.getGamepads().find(gp => gp?.vibrationActuator);
-        if (gamepad?.vibrationActuator) {
+        const gamepads = navigator.getGamepads();
+        const gamepad = gamepads.find(gp => gp && (gp as any).vibrationActuator);
+        if (gamepad && (gamepad as any).vibrationActuator) {
           const intensities = {
             light: { startDelay: 0, duration: 50, weakMagnitude: 0.1, strongMagnitude: 0.1 },
             medium: { startDelay: 0, duration: 100, weakMagnitude: 0.3, strongMagnitude: 0.3 },
@@ -69,7 +70,7 @@ export const useHapticFeedback = (options: HapticOptions = {}) => {
             selection: { startDelay: 0, duration: 25, weakMagnitude: 0.1, strongMagnitude: 0.1 },
           };
 
-          gamepad.vibrationActuator.playEffect('dual-rumble', intensities[type]);
+          (gamepad as any).vibrationActuator.playEffect('dual-rumble', intensities[type]);
         }
       } catch (error) {
         console.debug('Gamepad haptic feedback not available');

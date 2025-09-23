@@ -7,7 +7,7 @@ import {
   XCircle,
   TrendingUp,
   Gift,
-  Star,
+  // Star,
 } from "lucide-react";
 import { SwipeableVoucherCard } from "./components/SwipeableVoucherCard";
 import { PullToRefresh } from "./components/PullToRefresh";
@@ -38,16 +38,22 @@ interface BarcodeDisplayProps {
   onCancel: () => void;
 }
 
-// User mapping for API compatibility
-const mapGoogleUserToAPIUser = (email: string): string => {
-  // Map specific emails to your API users
+// User mapping for API compatibility - RESTRICTED ACCESS
+const mapGoogleUserToAPIUser = (email: string): string | null => {
+  // Only these emails are allowed access
   const emailMap: { [key: string]: string } = {
-    'gal.cibus@gmail.com': 'jewbaca1',
-    // Add Rinat's email here when known
-    // 'rinat.email@gmail.com': 'rinat_user'
+    'gal.oiring@gmail.com': 'jewbaca1',
+    'rinatmamo94@gmail.com': 'rinat_user',
   };
 
-  return emailMap[email] || 'jewbaca1'; // Default fallback
+  // Return null if email is not authorized
+  return emailMap[email] || null;
+};
+
+// Check if user is authorized
+const isAuthorizedUser = (email: string): boolean => {
+  const allowedEmails = ['gal.oiring@gmail.com', 'rinatmamo94@gmail.com'];
+  return allowedEmails.includes(email);
 };
 
 const App: React.FC = () => {
@@ -62,7 +68,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<string>("");
   const [lastScanTime, setLastScanTime] = useState<string>("");
   const [showSuccessAnimation, setShowSuccessAnimation] = useState<boolean>(false);
-  const [touchFeedback, setTouchFeedback] = useState<string>("");
+  // const [touchFeedback, setTouchFeedback] = useState<string>("");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   // Google Authentication
@@ -73,11 +79,25 @@ const App: React.FC = () => {
 
   // Handle Google Sign-In Success
   const handleGoogleSignIn = useCallback((googleUserData: any) => {
+    // Check if user is authorized
+    if (!isAuthorizedUser(googleUserData.email)) {
+      setError(`❌ Access denied. Only authorized users can access this app.`);
+      patterns.attention();
+      setTimeout(() => setError(''), 5000);
+      return;
+    }
+
     const apiUser = mapGoogleUserToAPIUser(googleUserData.email);
-    setUser(apiUser);
-    signIn(googleUserData);
-    patterns.celebration();
-    console.log(`Authenticated as: ${googleUserData.name} (${apiUser})`);
+    if (apiUser) {
+      setUser(apiUser);
+      signIn(googleUserData);
+      patterns.celebration();
+      console.log(`Authenticated as: ${googleUserData.name} (${apiUser})`);
+    } else {
+      setError(`❌ Your email is not authorized for this application.`);
+      patterns.attention();
+      setTimeout(() => setError(''), 5000);
+    }
   }, [signIn, patterns]);
 
   // Handle Google Sign-In Error
@@ -108,16 +128,27 @@ const App: React.FC = () => {
     
     darkModeQuery.addEventListener('change', handleColorSchemeChange);
     
-    // Set user when Google auth is ready
+    // Set user when Google auth is ready - check authorization
     if (isAuthenticated && googleUser) {
+      if (!isAuthorizedUser(googleUser.email)) {
+        // Sign out unauthorized user
+        signOut();
+        setError(`❌ Access denied. Your account is not authorized.`);
+        patterns.attention();
+        setTimeout(() => setError(''), 5000);
+        return;
+      }
+
       const apiUser = mapGoogleUserToAPIUser(googleUser.email);
-      setUser(apiUser);
+      if (apiUser) {
+        setUser(apiUser);
+      }
     }
     
     return () => {
       darkModeQuery.removeEventListener('change', handleColorSchemeChange);
     };
-  }, [isAuthenticated, googleUser]);
+  }, [isAuthenticated, googleUser, signOut, patterns]);
   
   // Load vouchers when authenticated
   useEffect(() => {
@@ -554,6 +585,13 @@ const App: React.FC = () => {
           <p className={`text-sm ${
             isDarkMode ? 'text-gray-300' : 'text-gray-600'
           }`}>Sign in to access your vouchers</p>
+          <p className={`text-xs mt-2 ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            🔒 Authorized emails only:
+            <br />gal.oiring@gmail.com
+            <br />rinatmamo94@gmail.com
+          </p>
         </div>
 
         {/* Error Display */}

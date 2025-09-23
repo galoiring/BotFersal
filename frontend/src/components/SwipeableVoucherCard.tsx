@@ -67,7 +67,6 @@ export const SwipeableVoucherCard: React.FC<SwipeableVoucherCardProps> = ({
     },
     trackMouse: false,
     trackTouch: true,
-    preventDefaultTouchmoveEvent: true,
   });
 
   const handleAction = (action: 'share' | 'delete' | 'view') => {

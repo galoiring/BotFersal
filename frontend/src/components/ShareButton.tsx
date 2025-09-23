@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Share2, Copy, MessageCircle, Mail, ExternalLink, Check } from 'lucide-react';
+import { Share2, Copy, MessageCircle, Mail, Check } from 'lucide-react';
 
 interface ShareButtonProps {
   title?: string;
