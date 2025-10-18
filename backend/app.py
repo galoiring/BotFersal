@@ -20,6 +20,7 @@ import tenbis_report
 import generate_barcode
 from email_processor import CibusEmailProcessor
 import appSettings as appSet
+import grocery
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -68,6 +69,11 @@ class GroceryItemRequest(BaseModel):
 class GroceryToggleRequest(BaseModel):
     user: str = Field(..., description="Username")
     item_id: str = Field(..., description="Item ID")
+
+
+class GrocerySuggestRequest(BaseModel):
+    user: str = Field(..., description="Username")
+    query: str = Field(..., description="Search query for suggestions")
 
 
 class ScanResponse(BaseModel):
@@ -660,6 +666,57 @@ async def get_grocery_history_endpoint(user: str = "jewbaca1") -> JSONResponse:
     except Exception as e:
         logger.error(f"Get grocery history error: {e}")
         return create_api_response(False, None, f"Error loading history: {str(e)}")
+
+
+@app.post("/api/grocery/suggest")
+async def get_grocery_suggestions_endpoint(request: GrocerySuggestRequest) -> JSONResponse:
+    """Get autocomplete suggestions for grocery items"""
+    try:
+        import time
+        start_time = time.time()
+
+        logger.info(f"Getting suggestions for query: '{request.query}' for user: {request.user}")
+
+        # Get user's master items (history)
+        user_list = mongo.get_grocery_list(request.user)
+        master_items = user_list.get("master_items", [])
+        current_items = user_list.get("items", [])
+
+        # If user has no history, use common Israeli groceries as suggestions
+        if not master_items:
+            common_items = grocery.get_common_israeli_groceries()
+            # Filter by query
+            if len(request.query) >= 2:
+                suggestions = grocery.find_similar_items(
+                    request.query,
+                    common_items,
+                    threshold=60,
+                    limit=8
+                )
+            else:
+                suggestions = common_items[:8]
+        else:
+            # Use user's history with fuzzy matching
+            suggestions = grocery.get_autocomplete_suggestions(
+                request.query,
+                master_items,
+                current_items,
+                max_suggestions=8
+            )
+
+        elapsed_time = (time.time() - start_time) * 1000  # Convert to ms
+
+        logger.info(f"Found {len(suggestions)} suggestions in {elapsed_time:.2f}ms")
+
+        return create_api_response(True, {
+            "suggestions": [item.get("name") for item in suggestions],
+            "suggestions_detailed": suggestions[:8],  # Include metadata for debugging
+            "response_time_ms": round(elapsed_time, 2)
+        }, f"Found {len(suggestions)} suggestions")
+
+    except Exception as e:
+        logger.error(f"Get suggestions error: {e}")
+        return create_api_response(False, None, f"Error getting suggestions: {str(e)}")
 
 
 # Catch-all for React routing (must be last)

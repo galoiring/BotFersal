@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { GroceryItem } from "./GroceryItem";
 import { PullToRefresh } from "./PullToRefresh";
+import { AutocompleteInput } from "./AutocompleteInput";
 
 interface GroceryItemData {
   id: string;
@@ -31,6 +32,9 @@ export const GroceryView: React.FC<GroceryViewProps> = ({
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadGroceryList = useCallback(async () => {
     try {
@@ -55,10 +59,68 @@ export const GroceryView: React.FC<GroceryViewProps> = ({
     loadGroceryList();
   }, [loadGroceryList]);
 
-  const handleAddItem = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Fetch suggestions with debouncing
+  const fetchSuggestions = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
 
-    if (!inputValue.trim()) return;
+    try {
+      setLoadingSuggestions(true);
+
+      const response = await fetch(`${apiBase}/grocery/suggest`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user: user,
+          query: query,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuggestions(data.data.suggestions || []);
+      } else {
+        setSuggestions([]);
+      }
+    } catch (err: any) {
+      console.error("Error fetching suggestions:", err);
+      setSuggestions([]);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  }, [apiBase, user]);
+
+  // Debounced input change
+  useEffect(() => {
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Set new timer (200ms delay for optimal UX)
+    if (inputValue.length >= 2) {
+      debounceTimerRef.current = setTimeout(() => {
+        fetchSuggestions(inputValue);
+      }, 200);
+    } else {
+      setSuggestions([]);
+    }
+
+    // Cleanup
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [inputValue, fetchSuggestions]);
+
+  const handleAddItem = async (itemName: string) => {
+    if (!itemName.trim()) return;
 
     try {
       setAdding(true);
@@ -71,7 +133,7 @@ export const GroceryView: React.FC<GroceryViewProps> = ({
         },
         body: JSON.stringify({
           user: user,
-          name: inputValue.trim(),
+          name: itemName.trim(),
         }),
       });
 
@@ -206,37 +268,22 @@ export const GroceryView: React.FC<GroceryViewProps> = ({
         </div>
       </div>
 
-      {/* Add Item Form */}
-      <form onSubmit={handleAddItem} className="mb-6">
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Add item... (e.g., חלב, לחם, קוטג׳)"
-            disabled={adding}
-            className={`flex-1 px-4 py-3 rounded-2xl border-2 text-base transition-all ${
-              isDarkMode
-                ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-purple-500"
-                : "bg-white border-gray-300 text-gray-800 placeholder-gray-400 focus:border-purple-500"
-            } focus:outline-none`}
-            dir="auto"
-          />
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            type="submit"
-            disabled={adding || !inputValue.trim()}
-            className={`px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 transition-all ${
-              adding || !inputValue.trim()
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700"
-            } text-white`}
-          >
-            <Plus className="w-5 h-5" />
-            Add
-          </motion.button>
-        </div>
-      </form>
+      {/* Add Item Form with Autocomplete */}
+      <div className="mb-6">
+        <AutocompleteInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSubmit={handleAddItem}
+          onSuggestionSelect={(suggestion) => {
+            handleAddItem(suggestion);
+          }}
+          suggestions={suggestions}
+          loading={loadingSuggestions}
+          disabled={adding}
+          isDarkMode={isDarkMode}
+          placeholder="Add item... (e.g., חלב, לחם, קוטג׳)"
+        />
+      </div>
 
       {/* Items List */}
       <div className="flex-1 overflow-hidden">
