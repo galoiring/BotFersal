@@ -59,6 +59,17 @@ class ScanRequest(BaseModel):
     scan_type: str = Field(..., description="Type of scan: 10bis or cibus")
 
 
+class GroceryItemRequest(BaseModel):
+    user: str = Field(..., description="Username")
+    name: str = Field(..., description="Item name")
+    category: Optional[str] = Field(None, description="Item category")
+
+
+class GroceryToggleRequest(BaseModel):
+    user: str = Field(..., description="Username")
+    item_id: str = Field(..., description="Item ID")
+
+
 class ScanResponse(BaseModel):
     success: bool
     added_count: int = 0
@@ -534,6 +545,122 @@ async def robots():
     if os.path.exists("build/robots.txt"):
         return FileResponse("build/robots.txt", media_type="text/plain")
     raise HTTPException(status_code=404, detail="Robots.txt not found")
+
+# ============================================================================
+# GROCERY LIST ENDPOINTS
+# ============================================================================
+
+@app.get("/api/grocery/list")
+async def get_grocery_list_endpoint(user: str = "jewbaca1") -> JSONResponse:
+    """Get user's grocery list"""
+    try:
+        logger.info(f"Getting grocery list for user: {user}")
+        user_list = mongo.get_grocery_list(user)
+
+        # Convert datetime objects to ISO strings for JSON serialization
+        items = user_list.get("items", [])
+        for item in items:
+            if "added_at" in item and hasattr(item["added_at"], "isoformat"):
+                item["added_at"] = item["added_at"].isoformat()
+
+        return create_api_response(True, {
+            "items": items,
+            "total_count": len(items),
+            "checked_count": sum(1 for item in items if item.get("is_checked", False))
+        }, "Grocery list loaded successfully")
+    except Exception as e:
+        logger.error(f"Get grocery list error: {e}")
+        return create_api_response(False, None, f"Error loading grocery list: {str(e)}")
+
+
+@app.post("/api/grocery/add")
+async def add_grocery_item_endpoint(request: GroceryItemRequest) -> JSONResponse:
+    """Add item to grocery list"""
+    try:
+        logger.info(f"Adding grocery item: {request.name} for user: {request.user}")
+
+        item = mongo.add_grocery_item(request.user, request.name, request.category)
+
+        if item:
+            # Convert datetime to ISO string
+            if "added_at" in item and hasattr(item["added_at"], "isoformat"):
+                item["added_at"] = item["added_at"].isoformat()
+
+            return create_api_response(True, {"item": item}, "Item added successfully")
+        else:
+            return create_api_response(False, None, "Failed to add item")
+    except Exception as e:
+        logger.error(f"Add grocery item error: {e}")
+        return create_api_response(False, None, f"Error adding item: {str(e)}")
+
+
+@app.post("/api/grocery/toggle")
+async def toggle_grocery_item_endpoint(request: GroceryToggleRequest) -> JSONResponse:
+    """Toggle item checked status"""
+    try:
+        logger.info(f"Toggling grocery item: {request.item_id} for user: {request.user}")
+
+        success = mongo.toggle_grocery_item(request.user, request.item_id)
+
+        if success:
+            return create_api_response(True, {"item_id": request.item_id}, "Item toggled successfully")
+        else:
+            return create_api_response(False, None, "Item not found")
+    except Exception as e:
+        logger.error(f"Toggle grocery item error: {e}")
+        return create_api_response(False, None, f"Error toggling item: {str(e)}")
+
+
+@app.delete("/api/grocery/item/{item_id}")
+async def delete_grocery_item_endpoint(item_id: str, user: str = "jewbaca1") -> JSONResponse:
+    """Delete item from grocery list"""
+    try:
+        logger.info(f"Deleting grocery item: {item_id} for user: {user}")
+
+        success = mongo.delete_grocery_item(user, item_id)
+
+        if success:
+            return create_api_response(True, {"item_id": item_id}, "Item deleted successfully")
+        else:
+            return create_api_response(False, None, "Item not found")
+    except Exception as e:
+        logger.error(f"Delete grocery item error: {e}")
+        return create_api_response(False, None, f"Error deleting item: {str(e)}")
+
+
+@app.post("/api/grocery/clear-checked")
+async def clear_checked_items_endpoint(user: str = "jewbaca1") -> JSONResponse:
+    """Clear all checked items"""
+    try:
+        logger.info(f"Clearing checked items for user: {user}")
+
+        success = mongo.clear_checked_items(user)
+
+        if success:
+            return create_api_response(True, None, "Checked items cleared successfully")
+        else:
+            return create_api_response(False, None, "Failed to clear items")
+    except Exception as e:
+        logger.error(f"Clear checked items error: {e}")
+        return create_api_response(False, None, f"Error clearing items: {str(e)}")
+
+
+@app.get("/api/grocery/history")
+async def get_grocery_history_endpoint(user: str = "jewbaca1") -> JSONResponse:
+    """Get user's grocery shopping history"""
+    try:
+        logger.info(f"Getting grocery history for user: {user}")
+
+        history = mongo.get_user_grocery_history(user)
+
+        return create_api_response(True, {
+            "history": history,
+            "total_unique_items": len(history)
+        }, "Grocery history loaded successfully")
+    except Exception as e:
+        logger.error(f"Get grocery history error: {e}")
+        return create_api_response(False, None, f"Error loading history: {str(e)}")
+
 
 # Catch-all for React routing (must be last)
 @app.get("/{path:path}")

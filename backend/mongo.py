@@ -11,6 +11,7 @@ amounts = ['15', '30', '40', '50', '100', '200']
 client = MongoClient(appsec.mongo_connection_string)
 mydb = client["bot_fersal"]
 mycol = mydb["shovarim"]
+grocery_col = mydb["grocery_lists"]  # New collection for grocery lists
 
 
 def insert_to_mongo(code):
@@ -126,3 +127,182 @@ def scan_cibus_emails():
     except Exception as e:
         print(f"❌ Error scanning emails: {e}")
         return 0, 0
+
+
+# ============================================================================
+# GROCERY LIST FUNCTIONS
+# ============================================================================
+
+def get_grocery_list(user):
+    """Get user's grocery list"""
+    try:
+        user_list = grocery_col.find_one({"user": user})
+        if user_list is None:
+            # Create new list if doesn't exist
+            grocery_col.insert_one({
+                "user": user,
+                "items": [],
+                "master_items": []
+            })
+            return {"items": [], "master_items": []}
+        return user_list
+    except Exception as e:
+        print(f"❌ Error getting grocery list: {e}")
+        return {"items": [], "master_items": []}
+
+
+def add_grocery_item(user, item_name, category=None):
+    """Add item to grocery list"""
+    try:
+        import uuid
+        from datetime import datetime
+
+        # Normalize name for matching
+        normalized_name = normalize_hebrew_text(item_name)
+
+        new_item = {
+            "id": str(uuid.uuid4()),
+            "name": item_name,
+            "normalized_name": normalized_name,
+            "is_checked": False,
+            "added_at": datetime.now(),
+            "category": category
+        }
+
+        # Get or create user's list
+        user_list = grocery_col.find_one({"user": user})
+        if user_list is None:
+            grocery_col.insert_one({
+                "user": user,
+                "items": [new_item],
+                "master_items": []
+            })
+        else:
+            grocery_col.update_one(
+                {"user": user},
+                {"$push": {"items": new_item}}
+            )
+
+        # Add to master items if not already there
+        update_master_items(user, item_name, normalized_name)
+
+        return new_item
+    except Exception as e:
+        print(f"❌ Error adding grocery item: {e}")
+        return None
+
+
+def toggle_grocery_item(user, item_id):
+    """Toggle item checked status"""
+    try:
+        user_list = grocery_col.find_one({"user": user})
+        if user_list:
+            items = user_list.get("items", [])
+            for item in items:
+                if item["id"] == item_id:
+                    item["is_checked"] = not item["is_checked"]
+                    grocery_col.update_one(
+                        {"user": user},
+                        {"$set": {"items": items}}
+                    )
+                    return True
+        return False
+    except Exception as e:
+        print(f"❌ Error toggling grocery item: {e}")
+        return False
+
+
+def delete_grocery_item(user, item_id):
+    """Delete item from grocery list"""
+    try:
+        grocery_col.update_one(
+            {"user": user},
+            {"$pull": {"items": {"id": item_id}}}
+        )
+        return True
+    except Exception as e:
+        print(f"❌ Error deleting grocery item: {e}")
+        return False
+
+
+def clear_checked_items(user):
+    """Remove all checked items"""
+    try:
+        user_list = grocery_col.find_one({"user": user})
+        if user_list:
+            items = user_list.get("items", [])
+            unchecked_items = [item for item in items if not item.get("is_checked", False)]
+            grocery_col.update_one(
+                {"user": user},
+                {"$set": {"items": unchecked_items}}
+            )
+            return True
+        return False
+    except Exception as e:
+        print(f"❌ Error clearing checked items: {e}")
+        return False
+
+
+def normalize_hebrew_text(text):
+    """Normalize Hebrew text for matching"""
+    import re
+
+    # Remove nikud (Hebrew diacritics)
+    text = re.sub(r'[\u0591-\u05C7]', '', text)
+
+    # Remove various apostrophe/geresh characters
+    text = text.replace("'", "").replace("׳", "").replace("״", "").replace("'", "")
+
+    # Lowercase and strip whitespace
+    return text.strip().lower()
+
+
+def update_master_items(user, item_name, normalized_name):
+    """Update master items database for learning"""
+    try:
+        user_list = grocery_col.find_one({"user": user})
+        if user_list:
+            master_items = user_list.get("master_items", [])
+
+            # Check if item already exists in master
+            found = False
+            for master_item in master_items:
+                if master_item.get("normalized_name") == normalized_name:
+                    # Increment usage count
+                    master_item["usage_count"] = master_item.get("usage_count", 0) + 1
+                    # Add alias if different spelling
+                    if item_name not in master_item.get("aliases", []):
+                        master_item.setdefault("aliases", []).append(item_name)
+                    found = True
+                    break
+
+            if not found:
+                # Add new master item
+                master_items.append({
+                    "name": item_name,
+                    "normalized_name": normalized_name,
+                    "aliases": [item_name],
+                    "usage_count": 1,
+                    "category": None
+                })
+
+            grocery_col.update_one(
+                {"user": user},
+                {"$set": {"master_items": master_items}}
+            )
+    except Exception as e:
+        print(f"❌ Error updating master items: {e}")
+
+
+def get_user_grocery_history(user):
+    """Get all items user has ever added"""
+    try:
+        user_list = grocery_col.find_one({"user": user})
+        if user_list:
+            master_items = user_list.get("master_items", [])
+            # Return sorted by usage count
+            return sorted(master_items, key=lambda x: x.get("usage_count", 0), reverse=True)
+        return []
+    except Exception as e:
+        print(f"❌ Error getting grocery history: {e}")
+        return []

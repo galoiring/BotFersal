@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import { useSwipeable } from "react-swipeable";
 import {
   Camera,
   Scan,
@@ -7,11 +9,13 @@ import {
   XCircle,
   TrendingUp,
   Gift,
+  ShoppingCart,
   // Star,
 } from "lucide-react";
 import { SwipeableVoucherCard } from "./components/SwipeableVoucherCard";
 import { PullToRefresh } from "./components/PullToRefresh";
 import { ShareButton } from "./components/ShareButton";
+import { GroceryView } from "./components/GroceryView";
 import { useHapticFeedback } from "./hooks/useHapticFeedback";
 import { GoogleAuth, useGoogleAuth } from "./auth/GoogleAuth";
 import "./App.css";
@@ -70,6 +74,7 @@ const App: React.FC = () => {
   const [showSuccessAnimation, setShowSuccessAnimation] = useState<boolean>(false);
   // const [touchFeedback, setTouchFeedback] = useState<string>("");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'vouchers' | 'grocery'>('vouchers');
 
   // Google Authentication
   const { user: googleUser, isAuthenticated, isLoading: authLoading, signIn, signOut } = useGoogleAuth();
@@ -349,31 +354,75 @@ const App: React.FC = () => {
     amount,
     onUse,
     onCancel,
-  }) => (
-    <div
+  }) => {
+    const [swipeOffset, setSwipeOffset] = useState(0);
+
+    const swipeHandlers = useSwipeable({
+      onSwiping: (eventData) => {
+        if (eventData.dir === 'Right') {
+          const offset = Math.min(300, Math.max(0, eventData.deltaX));
+          setSwipeOffset(offset);
+        }
+      },
+      onSwipedRight: (eventData) => {
+        if (eventData.deltaX > 150) {
+          patterns.pageSwipe();
+          onCancel();
+        } else {
+          setSwipeOffset(0);
+        }
+      },
+      trackMouse: false,
+      trackTouch: true,
+    });
+
+    return (
+    <motion.div
+      {...swipeHandlers}
+      initial={{ x: 0 }}
+      animate={{ x: swipeOffset }}
+      exit={{ x: '100%' }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className='fixed inset-0 bg-gray-100 flex flex-col z-50'
       onClick={(e) => e.target === e.currentTarget && onCancel()}
     >
+      {/* Swipe indicator overlay */}
+      {swipeOffset > 0 && (
+        <motion.div
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: Math.min(1, swipeOffset / 100) }}
+        >
+          <div className="bg-black/20 rounded-full p-3 backdrop-blur-sm">
+            <XCircle className="w-6 h-6 text-white" />
+          </div>
+        </motion.div>
+      )}
+
       {/* Status bar area - iOS style */}
       <div className='h-12 bg-green-500 w-full'></div>
-      
+
       <div className='flex-1 bg-gray-100 flex flex-col'>
-        {/* Header with close button */}
+        {/* Header with X button */}
         <div className='flex items-center justify-between p-4 bg-white border-b border-gray-200'>
           <div className='flex items-center gap-3'>
             <div className='bg-blue-500 p-2 rounded-lg'>
               <Gift className='w-6 h-6 text-white' />
             </div>
             <h3 className='text-xl font-semibold text-gray-900'>
-              Digital Voucher
+              Voucher
             </h3>
           </div>
-          <button
-            onClick={onCancel}
-            className='w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center'
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              patterns.buttonTap();
+              onCancel();
+            }}
+            className='w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors'
           >
-            <XCircle className='w-5 h-5 text-gray-600' />
-          </button>
+            <XCircle className='w-6 h-6 text-gray-600' />
+          </motion.button>
         </div>
 
         {/* Content */}
@@ -412,20 +461,12 @@ const App: React.FC = () => {
             </div>
             
             <div className='text-center mt-4'>
-              <div className='flex items-center justify-center gap-2 text-gray-600 mb-3'>
+              <div className='flex items-center justify-center gap-2 text-gray-600'>
                 <div className='w-6 h-6 bg-gray-200 rounded flex items-center justify-center'>
                   🛒
                 </div>
                 <span className='font-medium'>Show barcode for payment</span>
               </div>
-
-              <ShareButton
-                title="BotFersal Voucher"
-                text="Check out this digital voucher!"
-                voucherData={{ amount, barcode }}
-                hapticFeedback={patterns.buttonTap}
-                className="text-sm"
-              />
             </div>
           </div>
 
@@ -469,8 +510,9 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </motion.div>
+    );
+  };
 
   const HomeView: React.FC = () => (
     <div className='flex flex-col h-full'>
@@ -489,44 +531,41 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Compact Header */}
+      {/* Header Card */}
       <div
-        className='relative overflow-hidden rounded-2xl p-4 text-white mb-4'
+        className='relative overflow-hidden rounded-3xl p-6 text-white mb-6'
         style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-          boxShadow: "0 10px 25px -5px rgba(102, 126, 234, 0.3)",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          boxShadow: "0 8px 32px -8px rgba(102, 126, 234, 0.3)",
         }}
       >
-        <div className='relative z-10'>
-          <div className='flex items-center justify-between mb-2'>
-            <div>
-              <h1 className='text-lg font-bold'>BotFersal</h1>
-              <p className='text-white/90 text-sm'>Hello {googleUser?.name || (user === 'jewbaca1' ? 'Gal' : 'Rinat')}! 👋</p>
-            </div>
-            <div className='bg-white/20 backdrop-blur-sm rounded-xl p-2 cursor-pointer' onClick={handleSignOut}>
-              {googleUser?.picture ? (
-                <img src={googleUser.picture} alt="Profile" className='w-4 h-4 rounded-full' />
-              ) : (
-                <Wallet className='w-4 h-4 text-white' />
-              )}
-            </div>
+        <div className='flex items-center justify-between mb-6'>
+          <div>
+            <p className='text-white/80 text-sm'>Hello, {googleUser?.name?.split(' ')[0] || (user === 'jewbaca1' ? 'Gal' : 'Rinat')}</p>
           </div>
-          
-          <div className='bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <div className='text-base font-bold'>
-                  ₪{totalValue.toLocaleString()}
-                </div>
-                <div className='text-white/90 text-xs'>Total Value</div>
+          <div className='cursor-pointer' onClick={handleSignOut}>
+            {googleUser?.picture ? (
+              <img src={googleUser.picture} alt="Profile" className='w-8 h-8 rounded-full border-2 border-white/20' />
+            ) : (
+              <div className='w-8 h-8 bg-white/20 rounded-full flex items-center justify-center'>
+                <Wallet className='w-4 h-4 text-white' />
               </div>
-              <div className='text-right'>
-                <div className='text-base font-bold text-white/90'>
-                  {Object.values(vouchers).reduce((sum, count) => sum + count, 0)}
-                </div>
-                <div className='text-white/70 text-xs'>Vouchers</div>
-              </div>
+            )}
+          </div>
+        </div>
+
+        <div className='flex items-end justify-between'>
+          <div>
+            <div className='text-3xl font-bold mb-1'>
+              ₪{totalValue.toLocaleString()}
             </div>
+            <div className='text-white/80 text-sm'>Total Value</div>
+          </div>
+          <div className='text-right'>
+            <div className='text-2xl font-bold'>
+              {Object.values(vouchers).reduce((sum, count) => sum + count, 0)}
+            </div>
+            <div className='text-white/80 text-sm'>vouchers available</div>
           </div>
         </div>
       </div>
@@ -761,8 +800,61 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <div className='max-w-md mx-auto h-screen flex flex-col'>
-        <div className='flex-1 px-6 pt-6 pb-4 overflow-hidden'>
-          <HomeView />
+        <div className='flex-1 px-6 pt-6 pb-4 overflow-hidden flex flex-col'>
+          {/* Tab Switcher */}
+          <div className={`flex gap-2 mb-4 p-1 rounded-2xl ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          } shadow-sm`}>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                patterns.buttonTap();
+                setActiveTab('vouchers');
+              }}
+              className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                activeTab === 'vouchers'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                  : isDarkMode
+                  ? 'text-gray-400 hover:text-gray-200'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Gift size={18} />
+              Vouchers
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                patterns.buttonTap();
+                setActiveTab('grocery');
+              }}
+              className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                activeTab === 'grocery'
+                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md'
+                  : isDarkMode
+                  ? 'text-gray-400 hover:text-gray-200'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <ShoppingCart size={18} />
+              Grocery
+            </motion.button>
+          </div>
+
+          {/* Tab Content */}
+          <div className='flex-1 overflow-hidden'>
+            {activeTab === 'vouchers' ? (
+              <HomeView />
+            ) : (
+              <GroceryView
+                user={user}
+                apiBase={API_BASE}
+                isDarkMode={isDarkMode}
+                hapticFeedback={hapticFeedback}
+                onError={setError}
+              />
+            )}
+          </div>
         </div>
       </div>
 
