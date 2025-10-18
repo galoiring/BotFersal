@@ -1,0 +1,454 @@
+/* ============================================================================
+   iOS 26 Liquid Glass Design System
+   Apple's revolutionary glassmorphism with dynamic depth and vibrancy
+   ============================================================================ */
+
+/* ============================================================================
+   GLASS MATERIALS - Based on visionOS/iOS 26
+   ============================================================================ */
+
+.glass-thin {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px) saturate(180%) contrast(70%) brightness(110%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) contrast(70%) brightness(110%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.15),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+}
+
+.glass-regular {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(40px) saturate(200%) contrast(50%) brightness(120%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%) contrast(50%) brightness(120%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 12px 48px 0 rgba(31, 38, 135, 0.2),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+}
+
+.glass-thick {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(60px) saturate(220%) contrast(45%) brightness(130%);
+  -webkit-backdrop-filter: blur(60px) saturate(220%) contrast(45%) brightness(130%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 16px 64px 0 rgba(31, 38, 135, 0.25),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode variants */
+.dark .glass-thin {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass-regular {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 12px 48px 0 rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+.dark .glass-thick {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 16px 64px 0 rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================================================
+   VIBRANCY LAYERS
+   ============================================================================ */
+
+.glass-vibrant {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-vibrant::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.1) 0%,
+    rgba(168, 85, 247, 0.1) 50%,
+    rgba(236, 72, 153, 0.1) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.glass-vibrant:hover::before {
+  opacity: 1;
+}
+
+/* ============================================================================
+   LIQUID GLASS CARDS
+   ============================================================================ */
+
+.liquid-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 20px 60px -15px rgba(31, 38, 135, 0.25),
+    0 8px 16px -8px rgba(31, 38, 135, 0.15),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid-card:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    0 32px 80px -20px rgba(31, 38, 135, 0.35),
+    0 12px 24px -12px rgba(31, 38, 135, 0.2),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
+}
+
+.liquid-card:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+/* Dark mode */
+.dark .liquid-card {
+  background: rgba(15, 15, 15, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 20px 60px -15px rgba(0, 0, 0, 0.5),
+    0 8px 16px -8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================================================
+   DEPTH & ELEVATION
+   ============================================================================ */
+
+.depth-1 {
+  box-shadow: 0 4px 16px -4px rgba(31, 38, 135, 0.15);
+}
+
+.depth-2 {
+  box-shadow: 0 8px 32px -8px rgba(31, 38, 135, 0.2);
+}
+
+.depth-3 {
+  box-shadow: 0 16px 48px -12px rgba(31, 38, 135, 0.25);
+}
+
+.depth-4 {
+  box-shadow: 0 24px 64px -16px rgba(31, 38, 135, 0.3);
+}
+
+/* ============================================================================
+   SPECULAR HIGHLIGHTS
+   ============================================================================ */
+
+.specular-highlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.specular-highlight::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.4) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.specular-highlight:hover::after {
+  opacity: 1;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    transform: translate(-20%, -20%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(0%, 0%) scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+/* ============================================================================
+   DYNAMIC TINTS - Adapts to content
+   ============================================================================ */
+
+.tint-blue {
+  --tint-color: 59, 130, 246;
+  background: rgba(var(--tint-color), 0.08);
+}
+
+.tint-purple {
+  --tint-color: 139, 92, 246;
+  background: rgba(var(--tint-color), 0.08);
+}
+
+.tint-pink {
+  --tint-color: 236, 72, 153;
+  background: rgba(var(--tint-color), 0.08);
+}
+
+.tint-green {
+  --tint-color: 34, 197, 94;
+  background: rgba(var(--tint-color), 0.08);
+}
+
+/* ============================================================================
+   LIQUID GLASS BUTTONS
+   ============================================================================ */
+
+.liquid-button {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  padding: 12px 24px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow:
+    0 4px 16px -4px rgba(31, 38, 135, 0.2),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+}
+
+.liquid-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.liquid-button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 24px -6px rgba(31, 38, 135, 0.3),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+.liquid-button:hover::before {
+  transform: translateX(100%);
+}
+
+.liquid-button:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+/* ============================================================================
+   LIQUID GLASS INPUT FIELDS
+   ============================================================================ */
+
+.liquid-input {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 18px;
+  padding: 14px 18px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 4px 12px -4px rgba(31, 38, 135, 0.1),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.5);
+}
+
+.liquid-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 8px 24px -6px rgba(99, 102, 241, 0.2),
+    0 0 0 4px rgba(99, 102, 241, 0.1),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.6);
+}
+
+.dark .liquid-input {
+  background: rgba(20, 20, 20, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 4px 12px -4px rgba(0, 0, 0, 0.3),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.dark .liquid-input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(30, 30, 30, 0.8);
+  box-shadow:
+    0 8px 24px -6px rgba(139, 92, 246, 0.3),
+    0 0 0 4px rgba(139, 92, 246, 0.15),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+/* ============================================================================
+   FROSTED BLUR BACKGROUNDS
+   ============================================================================ */
+
+.frosted-bg {
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(100px) saturate(200%);
+  -webkit-backdrop-filter: blur(100px) saturate(200%);
+}
+
+.frosted-bg::before {
+  content: '';
+  position: absolute;
+  inset: -100%;
+  background: inherit;
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  mask-image: linear-gradient(to bottom, black 0% 50%, transparent 50% 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0% 50%, transparent 50% 100%);
+}
+
+/* ============================================================================
+   LIQUID ANIMATIONS
+   ============================================================================ */
+
+@keyframes liquid-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes liquid-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes liquid-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-liquid-float {
+  animation: liquid-float 3s ease-in-out infinite;
+}
+
+.animate-liquid-pulse {
+  animation: liquid-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================================================
+   LIQUID GRADIENT BACKGROUNDS
+   ============================================================================ */
+
+.liquid-gradient-purple {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.15) 0%,
+    rgba(99, 102, 241, 0.15) 25%,
+    rgba(168, 85, 247, 0.15) 50%,
+    rgba(124, 58, 237, 0.15) 75%,
+    rgba(139, 92, 246, 0.15) 100%
+  );
+  background-size: 200% 200%;
+  animation: liquid-gradient 8s ease infinite;
+}
+
+.liquid-gradient-rainbow {
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.1) 0%,
+    rgba(139, 92, 246, 0.1) 20%,
+    rgba(168, 85, 247, 0.1) 40%,
+    rgba(236, 72, 153, 0.1) 60%,
+    rgba(244, 114, 182, 0.1) 80%,
+    rgba(99, 102, 241, 0.1) 100%
+  );
+  background-size: 200% 200%;
+  animation: liquid-gradient 10s ease infinite;
+}
+
+@keyframes liquid-gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY & FALLBACKS
+   ============================================================================ */
+
+@supports not (backdrop-filter: blur(10px)) {
+  .glass-thin,
+  .glass-regular,
+  .glass-thick,
+  .liquid-card,
+  .liquid-button,
+  .liquid-input {
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  .dark .glass-thin,
+  .dark .glass-regular,
+  .dark .glass-thick,
+  .dark .liquid-card,
+  .dark .liquid-button,
+  .dark .liquid-input {
+    background: rgba(20, 20, 20, 0.95);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

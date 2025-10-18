@@ -19,6 +19,7 @@ import { GroceryView } from "./components/GroceryView";
 import { useHapticFeedback } from "./hooks/useHapticFeedback";
 import { GoogleAuth, useGoogleAuth } from "./auth/GoogleAuth";
 import "./App.css";
+import "./LiquidGlass.css";
 
 // API Configuration
 const API_BASE =
