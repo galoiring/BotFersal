@@ -1,5 +1,5 @@
 # backend/app.py - Enhanced FastAPI backend
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
@@ -581,18 +581,39 @@ async def get_grocery_list_endpoint(user: str = "jewbaca1") -> JSONResponse:
 
 @app.post("/api/grocery/add")
 async def add_grocery_item_endpoint(request: GroceryItemRequest) -> JSONResponse:
-    """Add item to grocery list"""
+    """Add item to grocery list with duplicate detection"""
     try:
         logger.info(f"Adding grocery item: {request.name} for user: {request.user}")
 
-        item = mongo.add_grocery_item(request.user, request.name, request.category)
+        result = mongo.add_grocery_item(request.user, request.name, request.category)
 
-        if item:
-            # Convert datetime to ISO string
-            if "added_at" in item and hasattr(item["added_at"], "isoformat"):
-                item["added_at"] = item["added_at"].isoformat()
+        if result:
+            # Check if it's a duplicate
+            if isinstance(result, dict) and result.get("duplicate"):
+                existing_item = result["item"]
+                # Convert datetime to ISO string
+                if "added_at" in existing_item and hasattr(existing_item["added_at"], "isoformat"):
+                    existing_item["added_at"] = existing_item["added_at"].isoformat()
 
-            return create_api_response(True, {"item": item}, "Item added successfully")
+                if result.get("unchecked"):
+                    return create_api_response(True, {
+                        "item": existing_item,
+                        "duplicate": True,
+                        "unchecked": True
+                    }, f"'{existing_item['name']}' was already in your list (checked off). We unchecked it for you!")
+                else:
+                    return create_api_response(False, {
+                        "item": existing_item,
+                        "duplicate": True,
+                        "unchecked": False
+                    }, f"'{existing_item['name']}' is already in your list!")
+            else:
+                # New item added successfully
+                # Convert datetime to ISO string
+                if "added_at" in result and hasattr(result["added_at"], "isoformat"):
+                    result["added_at"] = result["added_at"].isoformat()
+
+                return create_api_response(True, {"item": result}, "Item added successfully")
         else:
             return create_api_response(False, None, "Failed to add item")
     except Exception as e:
@@ -682,27 +703,32 @@ async def get_grocery_suggestions_endpoint(request: GrocerySuggestRequest) -> JS
         master_items = user_list.get("master_items", [])
         current_items = user_list.get("items", [])
 
-        # If user has no history, use common Israeli groceries as suggestions
-        if not master_items:
-            common_items = grocery.get_common_israeli_groceries()
-            # Filter by query
-            if len(request.query) >= 2:
-                suggestions = grocery.find_similar_items(
-                    request.query,
-                    common_items,
-                    threshold=60,
-                    limit=8
-                )
-            else:
-                suggestions = common_items[:8]
-        else:
-            # Use user's history with fuzzy matching
+        # Get common Israeli groceries
+        common_items = grocery.get_common_israeli_groceries()
+
+        # Combine master_items with common items for better suggestions
+        all_items = master_items + common_items
+
+        # Remove duplicates by normalized name
+        seen_normalized = set()
+        unique_items = []
+        for item in all_items:
+            normalized = item.get("normalized_name", mongo.normalize_hebrew_text(item.get("name", "")))
+            if normalized not in seen_normalized:
+                seen_normalized.add(normalized)
+                unique_items.append(item)
+
+        # Get suggestions using combined dataset
+        if len(request.query) >= 2:
             suggestions = grocery.get_autocomplete_suggestions(
                 request.query,
-                master_items,
+                unique_items,
                 current_items,
                 max_suggestions=8
             )
+        else:
+            # For very short queries, show recent history + common items
+            suggestions = unique_items[:8]
 
         elapsed_time = (time.time() - start_time) * 1000  # Convert to ms
 
@@ -717,6 +743,58 @@ async def get_grocery_suggestions_endpoint(request: GrocerySuggestRequest) -> JS
     except Exception as e:
         logger.error(f"Get suggestions error: {e}")
         return create_api_response(False, None, f"Error getting suggestions: {str(e)}")
+
+
+@app.post("/api/grocery/clean-history")
+async def clean_grocery_history_endpoint(user: str = "jewbaca1") -> JSONResponse:
+    """Clean up purchase history by removing typos and rarely used items"""
+    try:
+        logger.info(f"Cleaning grocery history for user: {user}")
+
+        removed_count = mongo.clean_master_items(user)
+
+        if removed_count > 0:
+            return create_api_response(True, {
+                "removed_count": removed_count
+            }, f"Cleaned {removed_count} items from purchase history")
+        else:
+            return create_api_response(True, {
+                "removed_count": 0
+            }, "No items to clean - your history looks good!")
+
+    except Exception as e:
+        logger.error(f"Clean history error: {e}")
+        return create_api_response(False, None, f"Error cleaning history: {str(e)}")
+
+
+@app.patch("/api/grocery/item/{item_id}/category")
+async def update_item_category_endpoint(
+    item_id: str,
+    request: Request,
+    user: str = "jewbaca1"
+) -> JSONResponse:
+    """Update the category of a grocery item"""
+    try:
+        body = await request.json()
+        new_category = body.get("category")
+
+        if not new_category:
+            return create_api_response(False, None, "Category is required")
+
+        logger.info(f"Updating item {item_id} to category '{new_category}' for user: {user}")
+
+        updated_item = mongo.update_grocery_item_category(user, item_id, new_category)
+
+        if updated_item:
+            return create_api_response(True, {
+                "item": updated_item
+            }, f"Category updated to '{new_category}'")
+        else:
+            return create_api_response(False, None, "Item not found")
+
+    except Exception as e:
+        logger.error(f"Update category error: {e}")
+        return create_api_response(False, None, f"Error updating category: {str(e)}")
 
 
 # Catch-all for React routing (must be last)

@@ -181,7 +181,6 @@ export const SwipeableVoucherCard: React.FC<SwipeableVoucherCardProps> = ({
             <Gift className='w-4 h-4 text-blue-500 mr-1' />
             <div className={`text-xl font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>₪{amount}</div>
           </div>
-          <div className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Digital Voucher</div>
           <div
             className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-300 ${
               count > 0
@@ -207,20 +206,6 @@ export const SwipeableVoucherCard: React.FC<SwipeableVoucherCardProps> = ({
           <div className='absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full shadow-sm animate-pulse'></div>
         )}
 
-        {/* Swipe indicator */}
-        {count > 0 && !isRevealed && (
-          <motion.div
-            animate={{ x: [0, 5, 0] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2"
-          >
-            <div className="flex gap-1">
-              <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-              <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-              <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-            </div>
-          </motion.div>
-        )}
       </motion.div>
     </div>
   );

@@ -33,6 +33,8 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   // Show suggestions when there are results and input is focused
   useEffect(() => {
     setShowSuggestions(suggestions.length > 0 && value.length >= 2);
+    // Reset selected index when suggestions change to prevent selecting wrong item
+    setSelectedIndex(-1);
   }, [suggestions, value]);
 
   // Handle click outside to close suggestions
@@ -144,7 +146,7 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                 <div className="py-1">
                   {suggestions.map((suggestion, index) => (
                     <motion.button
-                      key={suggestion}
+                      key={`${suggestion}-${index}`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleSuggestionClick(suggestion)}

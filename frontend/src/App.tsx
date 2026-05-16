@@ -12,9 +12,7 @@ import {
   ShoppingCart,
   // Star,
 } from "lucide-react";
-import { SwipeableVoucherCard } from "./components/SwipeableVoucherCard";
 import { PullToRefresh } from "./components/PullToRefresh";
-import { ShareButton } from "./components/ShareButton";
 import { GroceryView } from "./components/GroceryView";
 import { useHapticFeedback } from "./hooks/useHapticFeedback";
 import { GoogleAuth, useGoogleAuth } from "./auth/GoogleAuth";
@@ -28,12 +26,6 @@ const API_BASE =
 // Type definitions
 interface VoucherCounts {
   [key: string]: number;
-}
-
-interface VoucherCardProps {
-  amount: string;
-  count: number;
-  onClick: (amount: string) => void;
 }
 
 interface BarcodeDisplayProps {
@@ -73,9 +65,17 @@ const App: React.FC = () => {
   const [user, setUser] = useState<string>("");
   const [lastScanTime, setLastScanTime] = useState<string>("");
   const [showSuccessAnimation, setShowSuccessAnimation] = useState<boolean>(false);
+  const [scanResults, setScanResults] = useState<{count: number, details: string} | null>(null);
   // const [touchFeedback, setTouchFeedback] = useState<string>("");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'vouchers' | 'grocery'>('vouchers');
+  const [activeTab, setActiveTab] = useState<'vouchers' | 'grocery'>(() => {
+    const saved = localStorage.getItem('botfersal:activeTab');
+    return saved === 'grocery' ? 'grocery' : 'vouchers';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('botfersal:activeTab', activeTab);
+  }, [activeTab]);
 
   // Google Authentication
   const { user: googleUser, isAuthenticated, isLoading: authLoading, signIn, signOut } = useGoogleAuth();
@@ -246,21 +246,16 @@ const App: React.FC = () => {
         }),
       });
 
-      // Show success animation
-      setShowSuccessAnimation(true);
-      
-      // Reload vouchers to get updated counts
-      await loadVouchers();
-
+      // Close immediately so the user can scan the next voucher.
+      // Haptic + brief inline banner is enough confirmation;
+      // skip the fullscreen success modal which blocks rapid back-to-back scans.
       setShowBarcode(false);
       setSelectedVoucher(null);
-      
-      // Success message
-      setError("✅ Voucher marked as used successfully!");
-      setTimeout(() => {
-        setError("");
-        setShowSuccessAnimation(false);
-      }, 3000);
+
+      await loadVouchers();
+
+      setError("✅ Used");
+      setTimeout(() => setError(""), 1200);
       
     } catch (err: any) {
       patterns.connectionError();
@@ -295,18 +290,27 @@ const App: React.FC = () => {
       if (data.success) {
         if (data.data.added_count > 0) {
           patterns.scanComplete();
-          setShowSuccessAnimation(true);
-          
+
           // Show detailed info about new vouchers
           const voucherDetails = data.data.vouchers || {};
           const detailsText = Object.entries(voucherDetails)
             .filter(([_, count]) => (count as number) > 0)
             .map(([amount, count]) => `${count}x ${amount}₪`)
             .join(', ');
-          
-          setError(`🎉 Added ${data.data.added_count} new vouchers!${detailsText ? `\n${detailsText}` : ''}`);  
+
+          // Store scan results for success modal
+          setScanResults({
+            count: data.data.added_count,
+            details: detailsText
+          });
+
+          setShowSuccessAnimation(true);
+          setError(`🎉 Added ${data.data.added_count} new vouchers!${detailsText ? `\n${detailsText}` : ''}`);
           await loadVouchers(); // Reload vouchers
-          setTimeout(() => setShowSuccessAnimation(false), 2000);
+          setTimeout(() => {
+            setShowSuccessAnimation(false);
+            setScanResults(null);
+          }, 3000);
         } else {
           patterns.buttonTap();
           setError("ℹ️ No new vouchers found");
@@ -330,25 +334,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleShare = (amount: string) => {
-    // Share voucher info
-    console.log('Sharing voucher:', amount);
-  };
-
-  const VoucherCard: React.FC<VoucherCardProps> = ({
-    amount,
-    count,
-    onClick,
-  }) => (
-    <SwipeableVoucherCard
-      amount={amount}
-      count={count}
-      onClick={onClick}
-      onShare={handleShare}
-      isDarkMode={isDarkMode}
-      hapticFeedback={hapticFeedback}
-    />
-  );
 
   const BarcodeDisplay: React.FC<BarcodeDisplayProps> = ({
     barcode,
@@ -532,68 +517,70 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Header Card */}
-      <div
-        className='relative overflow-hidden rounded-3xl p-6 text-white mb-6'
-        style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          boxShadow: "0 8px 32px -8px rgba(102, 126, 234, 0.3)",
-        }}
-      >
-        <div className='flex items-center justify-between mb-6'>
+      {/* Balance Banner (Smaller) */}
+      <div className='balanceBanner mb-4'>
+        <div className='flex items-center justify-between'>
           <div>
-            <p className='text-white/80 text-sm'>Hello, {googleUser?.name?.split(' ')[0] || (user === 'jewbaca1' ? 'Gal' : 'Rinat')}</p>
+            <p className='greeting'>Hello, {googleUser?.name?.split(' ')[0] || (user === 'jewbaca1' ? 'Gal' : 'Rinat')}</p>
+            <div className='flex items-baseline gap-1'>
+              <span className='amount'>₪{totalValue.toLocaleString()}</span>
+              <span className='label'>available</span>
+            </div>
           </div>
-          <div className='cursor-pointer' onClick={handleSignOut}>
-            {googleUser?.picture ? (
-              <img src={googleUser.picture} alt="Profile" className='w-8 h-8 rounded-full border-2 border-white/20' />
-            ) : (
-              <div className='w-8 h-8 bg-white/20 rounded-full flex items-center justify-center'>
-                <Wallet className='w-4 h-4 text-white' />
-              </div>
-            )}
-          </div>
-        </div>
 
-        <div className='flex items-end justify-between'>
-          <div>
-            <div className='text-3xl font-bold mb-1'>
-              ₪{totalValue.toLocaleString()}
-            </div>
-            <div className='text-white/80 text-sm'>Total Value</div>
-          </div>
-          <div className='text-right'>
-            <div className='text-2xl font-bold'>
-              {Object.values(vouchers).reduce((sum, count) => sum + count, 0)}
-            </div>
-            <div className='text-white/80 text-sm'>vouchers available</div>
-          </div>
+          {/* Refresh Chip */}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              patterns.buttonTap();
+              loadVouchers();
+            }}
+            className='refreshBtn'
+          >
+            <svg className='w-5 h-5 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'></path>
+            </svg>
+          </motion.button>
         </div>
       </div>
 
-      {/* Vouchers Grid */}
+      {/* Section Header */}
+      <div className='flex items-center justify-between mb-4'>
+        <h2 className='text-sm font-semibold text-text'>My Vouchers</h2>
+        <span className='text-xs text-text-muted'>
+          {Object.values(vouchers).reduce((sum, count) => sum + count, 0)} available
+        </span>
+      </div>
+
+      {/* Vouchers Grid (2 Columns) */}
       <div className='flex-1 overflow-hidden'>
-        <h2 className={`text-base font-medium mb-3 flex items-center gap-2 ${
-          isDarkMode ? 'text-white' : 'text-gray-800'
-        }`}>
-          <Gift size={18} className='text-blue-600' />
-          My Vouchers
-        </h2>
         {loading ? (
           <div className='text-center py-8'>
-            <div className='w-10 h-10 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-3'></div>
-            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Loading vouchers...</p>
+            <div className='w-10 h-10 border-4 border-accent/20 border-t-accent rounded-full animate-spin mx-auto mb-3'></div>
+            <p className='text-sm text-text-muted'>Loading vouchers...</p>
           </div>
         ) : (
           <PullToRefresh onRefresh={loadVouchers}>
             <div className='grid grid-cols-2 gap-3 pb-4'>
               {Object.entries(vouchers).map(([amount, count]) => (
-                <VoucherCard
+                <motion.button
                   key={amount}
-                  amount={amount}
-                  count={count}
-                  onClick={handleVoucherClick}
-                />
+                  whileTap={count > 0 ? { scale: 0.99 } : {}}
+                  onClick={() => count > 0 && handleVoucherClick(amount)}
+                  disabled={count === 0}
+                  className={`voucherTile group ${count === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
+                >
+                  {/* Availability Dot */}
+                  {count > 0 && <div className='availability' />}
+
+                  {/* Value */}
+                  <div className='relative'>
+                    <div className='value'>₪{amount}</div>
+                    <div className='count'>
+                      {count} {count === 1 ? 'voucher' : 'vouchers'}
+                    </div>
+                  </div>
+                </motion.button>
               ))}
             </div>
           </PullToRefresh>
@@ -647,6 +634,25 @@ const App: React.FC = () => {
             onSuccess={handleGoogleSignIn}
             onError={handleGoogleSignInError}
           />
+
+          {/* DEV MODE: Quick login bypass for testing */}
+          {process.env.NODE_ENV === 'development' && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const devUser = {
+                  id: 'dev-user',
+                  name: 'Gal (Dev Mode)',
+                  email: 'gal.oiring@gmail.com',
+                  picture: ''
+                };
+                handleGoogleSignIn(devUser);
+              }}
+              className='w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-indigo-700 transition-all'
+            >
+              🔧 Dev Mode Sign In
+            </motion.button>
+          )}
         </div>
 
         {/* Info */}
@@ -670,13 +676,10 @@ const App: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <div
-        className={`min-h-screen transition-colors duration-300 ${
-          isDarkMode ? 'bg-gray-900' : ''
-        }`}
+        className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}
         style={{
-          background: isDarkMode
-            ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
-            : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+          background: "var(--grad-bg)",
+          backgroundSize: isDarkMode ? "100% 100%" : "400% 400%",
         }}
         dir='ltr'
       >
@@ -689,19 +692,16 @@ const App: React.FC = () => {
   if (authLoading) {
     return (
       <div
-        className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
-          isDarkMode ? 'bg-gray-900' : ''
-        }`}
+        className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}
         style={{
-          background: isDarkMode
-            ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
-            : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+          background: "var(--grad-bg)",
+          backgroundSize: isDarkMode ? "100% 100%" : "400% 400%",
         }}
         dir='ltr'
       >
         <div className='text-center'>
-          <div className='w-16 h-16 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-4'></div>
-          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Loading...</p>
+          <div className='w-16 h-16 border-4 border-accent/20 border-t-accent rounded-full animate-spin mx-auto mb-4'></div>
+          <p className='text-text-muted'>Loading...</p>
         </div>
       </div>
     );
@@ -709,116 +709,127 @@ const App: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${
-        isDarkMode ? 'bg-gray-900' : ''
-      }`}
+      className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}
       style={{
-        background: isDarkMode 
-          ? "linear-gradient(135deg, #1f2937 0%, #111827 100%)"
-          : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        background: "var(--grad-bg)",
+        backgroundSize: isDarkMode ? "100% 100%" : "400% 400%",
       }}
       dir='ltr'
     >
-      {/* Bottom Section with Scan Buttons */}
-      <div className='fixed bottom-0 left-0 right-0 z-40'>
-        <div className='max-w-md mx-auto'>
-          {/* Scan Last Time Info */}
-          {lastScanTime && (
-            <div className='px-6 pb-2'>
-              <div className={`text-center text-xs p-2 rounded-xl ${
-                isDarkMode 
-                  ? 'text-gray-300 bg-gray-800/70 border border-gray-700/30' 
-                  : 'text-gray-500 bg-white/70 border border-white/30'
-              } backdrop-blur-sm`}>
-                <TrendingUp className='w-3 h-3 inline mr-1' />
-                Last scan: {lastScanTime}
+      {/* Bottom Section with Scan Buttons - Only show on vouchers tab */}
+      {activeTab === 'vouchers' && (
+        <div className='fixed bottom-0 left-0 right-0 z-40'>
+          <div className='max-w-md mx-auto'>
+            {/* Scan Last Time Info */}
+            {lastScanTime && (
+              <div className='px-6 pb-2'>
+                <div className={`text-center text-xs p-2 rounded-xl backdrop-blur-sm ${
+                  isDarkMode
+                    ? 'text-gray-300 bg-gray-800/70 border border-gray-700/30'
+                    : 'text-gray-700 bg-white/90 border border-gray-300/50 shadow-sm'
+                }`}>
+                  <TrendingUp className='w-3 h-3 inline mr-1' />
+                  Last scan: {lastScanTime}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Background with blur */}
-          <div
-            className={`backdrop-blur-xl border-t shadow-2xl ${
-              isDarkMode 
-                ? 'bg-gray-900/95 border-gray-700/50'
-                : 'bg-white/95 border-white/50'
-            }`}
-          >
-            <div className='px-6 py-6'>
-              {/* Scan Buttons */}
-              <div className='grid grid-cols-2 gap-4'>
-                <button
-                  onClick={() => {
-                    patterns.buttonTap();
-                    handleScan("10bis");
-                  }}
-                  disabled={isScanning}
-                  className='bg-gradient-to-br from-orange-500 to-red-600 text-white p-5 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95 disabled:opacity-50'
-                >
-                  <div className='bg-white/20 p-2 rounded-xl'>
-                    {isScanning ? (
-                      <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-                    ) : (
-                      <Scan size={20} />
-                    )}
-                  </div>
-                  <div className='text-base font-bold'>
-                    {isScanning ? "Scanning..." : "10bis"}
-                  </div>
-                </button>
+            {/* Background with blur */}
+            <div
+              className={`backdrop-blur-xl border-t ${
+                isDarkMode
+                  ? 'bg-gray-900/95 border-gray-700/50 shadow-2xl'
+                  : 'bg-gradient-to-b from-white/98 to-gray-50/98 border-gray-200/80 shadow-lg'
+              }`}
+            >
+              <div className='px-6 py-4'>
+                {/* Section Header */}
+                <p className='text-xs font-semibold text-text-muted mb-3'>Scan for New Vouchers</p>
 
-                <button
-                  onClick={() => {
-                    patterns.buttonTap();
-                    handleScan("cibus");
-                  }}
-                  disabled={isScanning}
-                  className='bg-gradient-to-br from-green-500 to-emerald-600 text-white p-5 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform shadow-lg hover:scale-[1.02] active:scale-95 disabled:opacity-50'
-                >
-                  <div className='bg-white/20 p-2 rounded-xl'>
-                    {isScanning ? (
-                      <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-                    ) : (
-                      <Camera size={20} />
-                    )}
-                  </div>
-                  <div className='text-base font-bold'>
-                    {isScanning ? "Scanning..." : "Cibus"}
-                  </div>
-                </button>
+                {/* Scan Buttons */}
+                <div className='grid grid-cols-2 gap-4'>
+                  <motion.button
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => {
+                      patterns.buttonTap();
+                      handleScan("10bis");
+                    }}
+                    disabled={isScanning}
+                    className='providerBtn tenbis disabled:opacity-50'
+                  >
+                    <div className='icon'>
+                      {isScanning ? (
+                        <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                      ) : (
+                        <Scan size={20} />
+                      )}
+                    </div>
+                    <span>{isScanning ? "Scanning..." : "10bis"}</span>
+                  </motion.button>
+
+                  <motion.button
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => {
+                      patterns.buttonTap();
+                      handleScan("cibus");
+                    }}
+                    disabled={isScanning}
+                    className='providerBtn cibus disabled:opacity-50'
+                  >
+                    <div className='icon'>
+                      {isScanning ? (
+                        <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                      ) : (
+                        <Camera size={20} />
+                      )}
+                    </div>
+                    <span>{isScanning ? "Scanning..." : "Cibus"}</span>
+                  </motion.button>
+                </div>
               </div>
-            </div>
-            
-            {/* Home indicator */}
-            <div className='flex justify-center pb-2'>
-              <div className={`w-32 h-1 rounded-full ${
-                isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
-              }`}></div>
+
+              {/* Home indicator */}
+              <div className='flex justify-center pb-2'>
+                <div className={`w-32 h-1 rounded-full ${
+                  isDarkMode ? 'bg-gray-600' : 'bg-gray-400'
+                }`}></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Content */}
       <div className='max-w-md mx-auto h-screen flex flex-col'>
-        <div className='flex-1 px-6 pt-6 pb-4 overflow-hidden flex flex-col'>
-          {/* Tab Switcher */}
-          <div className={`flex gap-2 mb-4 p-1 rounded-2xl ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          } shadow-sm`}>
+        <div className='flex-1 px-6 pt-4 pb-4 overflow-hidden flex flex-col'>
+          {/* Tab Switcher - iOS 26 Liquid Glass Style */}
+          <div className="tabs mb-5">
+            {/* Liquid Glass Indicator */}
+            <motion.div
+              layoutId="tab-indicator"
+              className="absolute top-1 bottom-1 rounded-xl"
+              style={{
+                background: "var(--grad-tabs)",
+                backdropFilter: 'blur(20px) saturate(180%)',
+                boxShadow: '0 8px 24px -8px rgba(var(--accent), 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)',
+                width: 'calc(50% - 4px)',
+                left: activeTab === 'vouchers' ? '4px' : 'calc(50% + 4px)',
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 35,
+              }}
+            />
+
+            {/* Tab Buttons */}
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={() => {
                 patterns.buttonTap();
                 setActiveTab('vouchers');
               }}
-              className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
-                activeTab === 'vouchers'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
-                  : isDarkMode
-                  ? 'text-gray-400 hover:text-gray-200'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`tabBase ${activeTab === 'vouchers' ? 'tabActive' : 'tabInactive'}`}
             >
               <Gift size={18} />
               Vouchers
@@ -829,20 +840,14 @@ const App: React.FC = () => {
                 patterns.buttonTap();
                 setActiveTab('grocery');
               }}
-              className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
-                activeTab === 'grocery'
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md'
-                  : isDarkMode
-                  ? 'text-gray-400 hover:text-gray-200'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`tabBase ${activeTab === 'grocery' ? 'tabActive' : 'tabInactive'}`}
             >
               <ShoppingCart size={18} />
               Grocery
             </motion.button>
           </div>
 
-          {/* Tab Content */}
+          {/* Tab Content - No animation, instant switch */}
           <div className='flex-1 overflow-hidden'>
             {activeTab === 'vouchers' ? (
               <HomeView />
@@ -869,77 +874,235 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Enhanced Loading Overlay */}
+      {/* Enhanced Liquid Glass Loading Modal */}
       {isScanning && (
-        <div
-          className='fixed inset-0 bg-black/40 backdrop-blur-2xl flex items-center justify-center z-50 animate-scale-up'
-          style={{ backdropFilter: "blur(25px)" }}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className='fixed inset-0 flex items-center justify-center z-50'
+          style={{
+            background: isDarkMode
+              ? 'rgba(17, 24, 39, 0.8)'
+              : 'rgba(255, 255, 255, 0.3)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+          }}
         >
-          <div
-            className='bg-white/98 backdrop-blur-2xl rounded-3xl p-10 text-center border-2 border-white/40 shadow-3xl animate-float'
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className='relative max-w-sm w-full mx-4'
             style={{
-              boxShadow: "0 50px 100px -20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
-              background: "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%)"
+              background: isDarkMode
+                ? 'rgba(31, 41, 55, 0.7)'
+                : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(60px) saturate(200%)',
+              borderRadius: '32px',
+              border: isDarkMode
+                ? '1px solid rgba(255, 255, 255, 0.1)'
+                : '1px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: isDarkMode
+                ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
+                : '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.6)',
             }}
           >
-            <div className='relative mb-6'>
-              {/* Outer spinning ring */}
-              <div className='w-20 h-20 border-4 border-blue-200 rounded-full animate-spin mx-auto'></div>
-              {/* Inner spinning element */}
-              <div className='absolute inset-0 w-20 h-20 border-4 border-transparent border-t-blue-600 border-r-purple-600 rounded-full animate-spin mx-auto' style={{ animation: 'spin 1s linear infinite reverse' }}></div>
-              {/* Center pulse */}
-              <div className='absolute inset-0 flex items-center justify-center'>
-                <div className='w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse'></div>
+            {/* Specular highlight */}
+            <div
+              className='absolute top-0 left-1/4 right-1/4 h-20 rounded-full opacity-60'
+              style={{
+                background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%)',
+                filter: 'blur(20px)',
+              }}
+            />
+
+            <div className='relative p-8 text-center'>
+              {/* Animated Scanner Icon */}
+              <div className='relative mb-6 flex justify-center'>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className='w-20 h-20 rounded-full flex items-center justify-center'
+                  style={{
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3))'
+                      : 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))',
+                    border: isDarkMode
+                      ? '2px solid rgba(139, 92, 246, 0.5)'
+                      : '2px solid rgba(139, 92, 246, 0.3)',
+                  }}
+                >
+                  <Scan className={`w-10 h-10 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                </motion.div>
+              </div>
+
+              <h3 className={`text-2xl font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Scanning Vouchers
+              </h3>
+              <p className={`text-base mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Checking your inbox for new vouchers...
+              </p>
+
+              {/* Progress dots */}
+              <div className='flex justify-center space-x-2'>
+                {[0, 200, 400].map((delay, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: delay / 1000 }}
+                    className='w-2 h-2 rounded-full'
+                    style={{
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #818cf8, #a78bfa)'
+                        : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    }}
+                  />
+                ))}
               </div>
             </div>
-            
-            <div className='space-y-3'>
-              <h3 className='text-xl font-bold text-gray-800'>Scanning vouchers...</h3>
-              <p className='text-gray-600'>Connecting to server and updating data</p>
-              
-              {/* Progress indicators */}
-              <div className='flex justify-center space-x-2 mt-4'>
-                <div className='w-2 h-2 bg-blue-500 rounded-full animate-pulse' style={{ animationDelay: '0ms' }}></div>
-                <div className='w-2 h-2 bg-purple-500 rounded-full animate-pulse' style={{ animationDelay: '200ms' }}></div>
-                <div className='w-2 h-2 bg-blue-500 rounded-full animate-pulse' style={{ animationDelay: '400ms' }}></div>
-              </div>
-            </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
       
-      {/* Success Animation Overlay */}
-      {showSuccessAnimation && (
-        <div
-          className='fixed inset-0 bg-green-500/20 backdrop-blur-lg flex items-center justify-center z-50 animate-scale-up'
-          style={{ backdropFilter: "blur(20px)" }}
+      {/* Success Animation - Liquid Glass Style */}
+      {showSuccessAnimation && scanResults && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className='fixed inset-0 flex items-center justify-center z-50'
+          style={{
+            background: isDarkMode
+              ? 'rgba(6, 78, 59, 0.4)'
+              : 'rgba(134, 239, 172, 0.3)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+          }}
         >
-          <div
-            className='bg-white/98 backdrop-blur-2xl rounded-3xl p-10 text-center border-2 border-green-200 shadow-3xl animate-scale-up'
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className='relative max-w-sm w-full mx-4'
             style={{
-              boxShadow: "0 50px 100px -20px rgba(34, 197, 94, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
-              background: "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%)"
+              background: isDarkMode
+                ? 'rgba(6, 78, 59, 0.7)'
+                : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(60px) saturate(200%)',
+              borderRadius: '32px',
+              border: isDarkMode
+                ? '1px solid rgba(134, 239, 172, 0.3)'
+                : '1px solid rgba(134, 239, 172, 0.4)',
+              boxShadow: isDarkMode
+                ? '0 25px 50px -12px rgba(34, 197, 94, 0.5), inset 0 1px 0 0 rgba(134, 239, 172, 0.2)'
+                : '0 25px 50px -12px rgba(34, 197, 94, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.6)',
             }}
           >
-            <div className='relative mb-6'>
-              {/* Success checkmark animation */}
-              <div className='w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto animate-bounce'>
-                <CheckCircle size={40} className='text-white drop-shadow-lg' />
-              </div>
-              
-              {/* Celebration particles */}
-              <div className='absolute -top-2 -left-2 w-4 h-4 bg-yellow-400 rounded-full animate-ping'></div>
-              <div className='absolute -top-4 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping' style={{ animationDelay: '200ms' }}></div>
-              <div className='absolute -bottom-2 -left-4 w-2 h-2 bg-blue-400 rounded-full animate-ping' style={{ animationDelay: '400ms' }}></div>
-              <div className='absolute -bottom-4 -right-2 w-3 h-3 bg-purple-400 rounded-full animate-ping' style={{ animationDelay: '600ms' }}></div>
+            {/* Specular highlight */}
+            <div
+              className='absolute top-0 left-1/4 right-1/4 h-20 rounded-full opacity-60'
+              style={{
+                background: 'radial-gradient(circle, rgba(134, 239, 172, 0.6) 0%, transparent 70%)',
+                filter: 'blur(20px)',
+              }}
+            />
+
+            {/* Celebration particles */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className='absolute -top-2 -left-2 w-3 h-3 bg-yellow-400 rounded-full'
+            />
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className='absolute -top-4 -right-1 w-2 h-2 bg-green-400 rounded-full'
+            />
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className='absolute -bottom-2 -left-4 w-2 h-2 bg-blue-400 rounded-full'
+            />
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className='absolute -bottom-4 -right-2 w-3 h-3 bg-purple-400 rounded-full'
+            />
+
+            <div className='relative p-8 text-center'>
+              {/* Success Icon */}
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", damping: 15, stiffness: 200 }}
+                className='relative mb-6 flex justify-center'
+              >
+                <div
+                  className='w-24 h-24 rounded-full flex items-center justify-center'
+                  style={{
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(16, 185, 129, 0.4))'
+                      : 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.3))',
+                    border: isDarkMode
+                      ? '3px solid rgba(34, 197, 94, 0.6)'
+                      : '3px solid rgba(34, 197, 94, 0.4)',
+                  }}
+                >
+                  <CheckCircle className={`w-14 h-14 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
+                </div>
+              </motion.div>
+
+              <motion.h3
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className={`text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+              >
+                Success! 🎉
+              </motion.h3>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className='mb-4'
+              >
+                <div
+                  className='inline-block px-6 py-3 rounded-2xl mb-3'
+                  style={{
+                    background: isDarkMode
+                      ? 'rgba(34, 197, 94, 0.2)'
+                      : 'rgba(34, 197, 94, 0.15)',
+                    border: isDarkMode
+                      ? '1px solid rgba(34, 197, 94, 0.3)'
+                      : '1px solid rgba(34, 197, 94, 0.2)',
+                  }}
+                >
+                  <div className={`text-4xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                    +{scanResults.count}
+                  </div>
+                  <div className={`text-sm font-medium ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>
+                    New Vouchers
+                  </div>
+                </div>
+              </motion.div>
+
+              {scanResults.details && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}
+                >
+                  {scanResults.details}
+                </motion.p>
+              )}
             </div>
-            
-            <div className='space-y-3'>
-              <h3 className='text-2xl font-bold text-gray-800'>Well done! 🎉</h3>
-              <p className='text-green-600 font-semibold'>Operation completed successfully</p>
-            </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );

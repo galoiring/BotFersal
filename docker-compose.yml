@@ -1,6 +1,23 @@
 version: "3.8"
 
 services:
+  mongodb:
+    image: mongo:7
+    container_name: botfersal-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=bot_fersal
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   botfersal:
     build: .
     container_name: botfersal-app
@@ -9,10 +26,14 @@ services:
     environment:
       - NODE_ENV=production
       - PYTHONUNBUFFERED=1
+      - MONGO_CONNECTION_STRING=mongodb://mongodb:27017/bot_fersal
     volumes:
       - ./logs:/app/logs
       - ./temp:/app/temp
     restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
@@ -35,3 +56,6 @@ services:
     depends_on:
       botfersal:
         condition: service_healthy
+
+volumes:
+  mongodb_data:

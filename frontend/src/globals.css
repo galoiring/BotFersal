@@ -1,0 +1,382 @@
+/* ============================================================================
+   iOS 26 Liquid Glass Design System - Global Theme
+   Custom properties for light/dark mode with Tailwind integration
+   ============================================================================ */
+
+/* Light mode (default) */
+:root {
+  /* Backgrounds */
+  --bg: 245 250 255; /* Light blue-white */
+  --card: 255 255 255; /* Pure white cards */
+  --stroke: 220 230 245; /* Light blue-gray borders */
+
+  /* Text */
+  --text: 30 41 59; /* Dark blue-gray */
+  --text-muted: 100 116 139; /* Muted blue-gray */
+
+  /* Accents */
+  --accent: 59 130 246; /* Blue-500 */
+  --accent-light: 96 165 250; /* Blue-400 */
+
+  /* Success/Error */
+  --success: 52 211 153; /* Emerald-400 */
+  --error: 239 68 68; /* Red-500 */
+
+  /* Gradients */
+  --grad-tabs: linear-gradient(135deg, #60C6C1 0%, #6E8EF5 100%);
+  --grad-header: linear-gradient(135deg, #60C6C1 0%, #6E8EF5 90%);
+  --grad-bg: linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%);
+  --grad-voucher: linear-gradient(135deg, #6ECAD1 0%, #7C88E7 100%);
+  --glow-voucher: 0 8px 24px rgba(110, 136, 246, .28);
+
+  /* Glass effects */
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-shadow: 0 8px 32px -8px rgba(31, 38, 135, 0.15);
+}
+
+/* Dark mode */
+.dark {
+  /* Backgrounds */
+  --bg: 14 27 40; /* Dark desaturated blue */
+  --card: 25 40 60; /* Dark blue card */
+  --stroke: 100 120 150; /* Desaturated blue-gray */
+
+  /* Text */
+  --text: 232 238 245; /* Light blue-white */
+  --text-muted: 138 157 181; /* Muted blue-gray */
+
+  /* Accents */
+  --accent: 90 136 232; /* Bright blue */
+  --accent-light: 107 157 245; /* Lighter blue */
+
+  /* Success/Error */
+  --success: 76 204 163; /* Teal-green */
+  --error: 248 113 113; /* Red-400 */
+
+  /* Gradients */
+  --grad-tabs: linear-gradient(135deg, #3B9EBC 0%, #5A88E8 100%);
+  --grad-header: linear-gradient(135deg, #2A8AA8 0%, #4A76D8 90%);
+  --grad-bg: radial-gradient(circle at top, #0E1B28 0%, #0A1622 50%, #08131D 100%);
+  --grad-voucher: linear-gradient(135deg, #3B9EBC 0%, #5A88E8 100%);
+  --glow-voucher: 0 8px 24px rgba(90, 136, 232, .35);
+
+  /* Glass effects */
+  --glass-bg: rgba(20, 30, 45, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================================
+   Component Class Mappings
+   ============================================================================ */
+
+/* Tabs Container */
+.tabs {
+  @apply relative flex gap-1 p-1 rounded-xl2;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Tab Base */
+.tabBase {
+  @apply relative z-10 flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-colors duration-300 flex items-center justify-center gap-2;
+}
+
+/* Active Tab */
+.tabActive {
+  @apply text-white;
+}
+
+/* Inactive Tab */
+.tabInactive {
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+/* Header Card */
+.headerCard {
+  @apply rounded-xl3 p-5 mb-4;
+  background: var(--grad-header);
+  box-shadow: 0 8px 24px -8px rgba(139, 92, 246, 0.3);
+}
+
+.headerCard .title {
+  @apply flex items-center gap-2 mb-3;
+}
+
+.headerCard .icon {
+  @apply p-2 rounded-xl bg-white/20 backdrop-blur-sm;
+}
+
+.headerCard .meta {
+  @apply flex items-center justify-between text-white/95;
+}
+
+.headerCard .count {
+  @apply text-2xl font-bold;
+}
+
+.headerCard .label {
+  @apply text-xs opacity-90;
+}
+
+.headerCard .chip {
+  @apply px-3 py-1.5 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-sm;
+}
+
+/* Search/Add Area */
+.search {
+  @apply mb-4;
+}
+
+.search .wrapper {
+  @apply relative;
+}
+
+.search .input {
+  @apply w-full px-4 py-3.5 rounded-xl2 text-sm transition-all duration-300;
+  background: var(--glass-bg);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border: 1.5px solid var(--glass-border);
+  color: rgb(var(--text));
+  box-shadow: var(--glass-shadow);
+}
+
+.search .input:focus {
+  outline: none;
+  border-color: rgb(var(--accent));
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 24px -6px rgba(var(--accent), 0.2), 0 0 0 4px rgba(var(--accent), 0.1);
+}
+
+.dark .search .input {
+  background: rgba(30, 30, 45, 0.8);
+}
+
+.dark .search .input:focus {
+  background: rgba(40, 40, 55, 0.9);
+}
+
+.search .addFab {
+  @apply absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all duration-300;
+  background: var(--grad-tabs);
+  box-shadow: 0 4px 12px -4px rgba(var(--accent), 0.4);
+}
+
+.search .addFab:hover {
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 6px 16px -4px rgba(var(--accent), 0.5);
+}
+
+/* Category Section */
+.section {
+  @apply mb-3;
+}
+
+.section .header {
+  @apply flex items-center justify-between px-3 py-2 rounded-xl mb-2 cursor-pointer transition-all duration-300;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+.section .header:hover {
+  background: rgba(var(--accent), 0.1);
+  border-color: rgba(var(--accent), 0.2);
+}
+
+.section .title {
+  @apply flex items-center gap-2;
+}
+
+.section .name {
+  @apply text-sm font-semibold;
+  color: rgb(var(--text));
+}
+
+.section .count {
+  @apply text-xs;
+  color: rgb(var(--text-muted));
+}
+
+.section .items {
+  @apply space-y-1.5;
+}
+
+/* Item Row */
+.item {
+  @apply rounded-xl3;
+}
+
+.item .row {
+  @apply flex items-center gap-2.5 p-3 rounded-xl2 transition-all duration-300;
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.item .row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px -10px rgba(31, 38, 135, 0.2);
+}
+
+/* Checkbox Base */
+.checkboxBase {
+  @apply flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300 border-2;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.checkboxOff {
+  background: var(--glass-bg);
+  border-color: rgb(var(--stroke));
+}
+
+.checkboxOn {
+  @apply bg-gradient-to-br from-green-400 to-emerald-500;
+  border-color: transparent;
+  box-shadow: 0 4px 12px -4px rgba(var(--success), 0.5);
+}
+
+/* Item Label */
+.item .label {
+  @apply flex-1 text-sm font-medium transition-all duration-300;
+  color: rgb(var(--text));
+}
+
+.item .labelChecked {
+  @apply line-through;
+  color: rgb(var(--text-muted));
+}
+
+/* Action Buttons */
+.actionBtn {
+  @apply flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs text-white transition-all duration-300;
+}
+
+.actionBtn.delete {
+  @apply bg-red-500 hover:bg-red-600;
+  box-shadow: 0 4px 12px -4px rgba(239, 68, 68, 0.4);
+}
+
+.actionBtn.category {
+  @apply bg-purple-500 hover:bg-purple-600;
+  box-shadow: 0 4px 12px -4px rgba(139, 92, 246, 0.4);
+}
+
+/* Footer */
+.footer {
+  @apply backdrop-blur-xl border-t p-4;
+  background: var(--glass-bg);
+  border-color: rgb(var(--stroke) / 0.5);
+}
+
+.dark .footer {
+  background: rgba(15, 15, 30, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Utility Classes */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Voucher Tiles */
+.voucherTile {
+  @apply relative rounded-2xl p-5 text-white shadow-lg transition-all active:scale-[.99] overflow-hidden;
+  background: var(--grad-voucher);
+}
+
+.voucherTile::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 transition-opacity;
+}
+
+.voucherTile:active::before {
+  opacity: 1;
+}
+
+.voucherTile:disabled {
+  @apply cursor-not-allowed;
+  background: var(--glass-bg);
+  filter: grayscale(0.5);
+  box-shadow: none;
+}
+
+.voucherTile:disabled::before {
+  display: none;
+}
+
+.voucherTile .availability {
+  @apply absolute top-3 right-3 w-2 h-2 bg-green-400 rounded-full;
+  box-shadow: 0 0 8px rgba(74, 222, 128, .6);
+}
+
+.voucherTile .value {
+  @apply text-4xl font-bold mb-1;
+}
+
+.voucherTile .count {
+  @apply text-white/80 text-xs font-medium;
+}
+
+/* Balance Banner (smaller) */
+.balanceBanner {
+  @apply rounded-2xl p-4 text-white shadow-lg;
+  background: var(--grad-header);
+}
+
+.balanceBanner .greeting {
+  @apply text-white/80 text-xs font-medium mb-1;
+}
+
+.balanceBanner .amount {
+  @apply text-3xl font-bold;
+}
+
+.balanceBanner .label {
+  @apply text-white/70 text-sm;
+}
+
+.balanceBanner .refreshBtn {
+  @apply w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 hover:bg-white/30;
+}
+
+/* Provider Buttons */
+.providerBtn {
+  @apply rounded-2xl p-5 text-white font-bold text-base shadow-lg active:scale-[.99] transition-all flex items-center justify-center gap-3 backdrop-blur-sm;
+}
+
+.providerBtn.tenbis {
+  background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+}
+
+.providerBtn.cibus {
+  background: linear-gradient(135deg, #22C55E 0%, #10B981 100%);
+}
+
+.providerBtn .icon {
+  @apply w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
