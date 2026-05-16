@@ -552,6 +552,33 @@ async def robots():
         return FileResponse("build/robots.txt", media_type="text/plain")
     raise HTTPException(status_code=404, detail="Robots.txt not found")
 
+@app.get("/sw.js")
+async def service_worker():
+    """Kill-switch service worker.
+
+    Old PWA installs registered /sw.js and cache the JS bundle aggressively,
+    which kept showing the pre-grocery build even after redeploys. This SW
+    activates immediately, unregisters itself, clears every cache, and forces
+    a hard reload on all clients — so the next reload fetches the fresh
+    bundle directly from the server with no SW intercept.
+    """
+    return HTMLResponse(
+        content=(
+            "self.addEventListener('install', e => self.skipWaiting());\n"
+            "self.addEventListener('activate', e => {\n"
+            "  e.waitUntil((async () => {\n"
+            "    const names = await caches.keys();\n"
+            "    await Promise.all(names.map(n => caches.delete(n)));\n"
+            "    await self.registration.unregister();\n"
+            "    const clients = await self.clients.matchAll({type: 'window'});\n"
+            "    clients.forEach(c => c.navigate(c.url));\n"
+            "  })());\n"
+            "});\n"
+        ),
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
+
 # ============================================================================
 # GROCERY LIST ENDPOINTS
 # ============================================================================

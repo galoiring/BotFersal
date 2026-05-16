@@ -17,16 +17,7 @@ root.render(
   </React.StrictMode>
 );
 
-// Register service worker for PWA
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => {
-        console.log("SW registered: ", registration);
-      })
-      .catch((registrationError) => {
-        console.log("SW registration failed: ", registrationError);
-      });
-  });
-}
+// Don't register a new service worker.
+// The backend serves /sw.js as a kill-switch that unregisters any existing
+// SW and clears caches — this prevents the old PWA cache from masking new
+// deploys (which is what hid the grocery tab on already-installed phones).
