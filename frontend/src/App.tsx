@@ -250,12 +250,20 @@ const App: React.FC = () => {
       // Haptic + brief inline banner is enough confirmation;
       // skip the fullscreen success modal which blocks rapid back-to-back scans.
       setShowBarcode(false);
-      setSelectedVoucher(null);
 
-      await loadVouchers();
+      // Optimistically decrement the count so the UI reflects the use immediately.
+      // loadVouchers() reconciles below in case the server disagrees.
+      const usedAmount = selectedVoucher;
+      setVouchers(prev => ({
+        ...prev,
+        [usedAmount]: Math.max(0, (prev[usedAmount] ?? 0) - 1),
+      }));
+      setSelectedVoucher(null);
 
       setError("✅ Used");
       setTimeout(() => setError(""), 1200);
+
+      loadVouchers();
       
     } catch (err: any) {
       patterns.connectionError();
@@ -310,7 +318,7 @@ const App: React.FC = () => {
           setTimeout(() => {
             setShowSuccessAnimation(false);
             setScanResults(null);
-          }, 3000);
+          }, 1500);
         } else {
           patterns.buttonTap();
           setError("ℹ️ No new vouchers found");

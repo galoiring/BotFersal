@@ -8,20 +8,21 @@ The driving principle: **the app is used in supermarket aisles with one hand on 
 
 ## Already shipped on this branch
 
-- **Voucher "Used" no longer blocks the next scan.** Removed the 3s fullscreen success modal in `handleVoucherUse`; haptic + a 1.2s inline banner is the new feedback. ([App.tsx:225-263](frontend/src/App.tsx:225))
+- **Voucher "Used" no longer blocks the next scan.** Removed the 3s fullscreen success modal in `handleVoucherUse`; haptic + a 1.2s inline banner is the new feedback. ([App.tsx:232-265](frontend/src/App.tsx:232))
+- **Optimistic voucher count.** After mark-used, the local count drops instantly; the server reload happens in the background and reconciles if it ever disagrees. ([App.tsx:255-266](frontend/src/App.tsx:255))
+- **New-vouchers scan modal trimmed.** 3000ms → 1500ms, so the post-scan delay is half what it was. ([App.tsx:313](frontend/src/App.tsx:313))
 - **Smart default tab.** App re-opens to whichever tab (`vouchers` / `grocery`) you used last, via `localStorage`. ([App.tsx:71-78](frontend/src/App.tsx:71))
 - **"Clean autocomplete history" UI.** Subtle text-button at the bottom of the grocery list — calls `/api/grocery/clean-history`, with a confirm dialog and a "removed N items" toast. ([GroceryView.tsx](frontend/src/components/GroceryView.tsx))
+- **Pull-to-refresh on vouchers** was already wired ([App.tsx:563](frontend/src/App.tsx:563)) — verified, no action needed.
 
 ---
 
 ## Next — Quick wins (a few minutes each)
 
-1. **Trim the new-vouchers scan success modal too.** Same blocking pattern as the voucher-use one we just fixed. 3000ms is too long. Drop to ~1200ms and consider making it a corner toast (`pointer-events: none`) instead of fullscreen. [App.tsx:309-313](frontend/src/App.tsx:309)
-2. **Optimistic voucher count.** After "mark used", decrement the local count immediately instead of waiting on `loadVouchers()`. Snap-back on API failure. Currently the count visibly lags by ~300ms.
-3. **Pull-to-refresh on vouchers tab.** Grocery has `PullToRefresh`, vouchers don't. Same component, drop-in.
-4. **Loading skeletons for vouchers/grocery list.** Cards with shimmer instead of a center spinner — feels twice as fast even when it's the same.
-5. **Larger touch targets on voucher count cards.** Min 48×48px hit area, even if the card is small.
-6. **Persist dark mode preference.** Verify it survives reload — if it doesn't, add `localStorage` like we did for `activeTab`.
+1. **Loading skeletons for vouchers/grocery list.** Cards with shimmer instead of a center spinner — feels twice as fast even when it's the same.
+2. **Larger touch targets on voucher count cards.** Min 48×48px hit area, even if the card is small.
+3. **Manual dark mode toggle.** Right now we auto-follow system — adding a tap-to-toggle button (with `localStorage` persistence) lets you override per-device.
+4. **Make the new-vouchers success modal non-blocking.** Even at 1500ms, it still captures touches. Switch to a corner toast (`pointer-events: none`) so the user can tap right through it.
 
 ## Phase 2 — Rapid-scan ergonomics (the supermarket flow)
 
